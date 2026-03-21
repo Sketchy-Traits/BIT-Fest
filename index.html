@@ -1,0 +1,65 @@
+<body>
+
+  <h1>BIT Fest</h1>
+  <p>Back In Time — LIVE</p>
+
+  <button onclick="playLive()">Main Stage (LIVE)</button>
+
+  <audio id="player" controls></audio>
+  <p id="status"></p>
+
+  <!-- 👇 PASTE NEW SCRIPT HERE -->
+  <script>
+    const AUDIO_URL = "PASTE_YOUR_R2_URL_HERE";
+
+    const START_HOUR = 11;
+    const START_MINUTE = 55;
+
+    const FESTIVAL_LENGTH_SECONDS = 16 * 60 * 60;
+
+    function getFestivalSeconds() {
+      const now = new Date();
+
+      let start = new Date(now);
+      start.setHours(START_HOUR, START_MINUTE, 0, 0);
+
+      if (now.getHours() < 4) {
+        start.setDate(start.getDate() - 1);
+      }
+
+      return Math.floor((now - start) / 1000);
+    }
+
+    function playLive() {
+      const player = document.getElementById("player");
+      const status = document.getElementById("status");
+
+      const elapsed = getFestivalSeconds();
+
+      if (elapsed < 0 || elapsed > FESTIVAL_LENGTH_SECONDS) {
+        status.innerText = "BIT Fest is closed. Opens daily at 11:55.";
+        return;
+      }
+
+      player.src = AUDIO_URL;
+      player.load();
+
+      status.innerText = "Loading live set...";
+
+      player.onloadedmetadata = () => {
+        const safeTime = Math.min(elapsed, player.duration - 1);
+        player.currentTime = safeTime;
+
+        player.play().catch(() => {
+          status.innerText = "Press play to start audio";
+        });
+
+        const hrs = Math.floor(safeTime / 3600);
+        const mins = Math.floor((safeTime % 3600) / 60);
+
+        status.innerText = `Live now — ${hrs}h ${mins}m in`;
+      };
+    }
+  </script>
+
+</body>

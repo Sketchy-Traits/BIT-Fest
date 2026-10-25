@@ -52,7 +52,7 @@
   .now-playing {
     background: #151520;
     border-radius: 12px;
-    padding: 20px;
+    padding: 25px 20px;
     margin: 25px 0;
   }
 
@@ -63,14 +63,48 @@
   }
 
   #artist {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
-    margin: 12px 0;
+    margin: 14px 0 8px;
+    color: #ffdb4d;
+  }
+
+  #set-title {
+    font-size: 19px;
+    margin-bottom: 6px;
+  }
+
+  #set-year {
+    color: #aaa;
+    font-size: 15px;
   }
 
   #set-time {
     color: #aaa;
-    font-size: 15px;
+    font-size: 14px;
+    margin-top: 14px;
+  }
+
+  .up-next {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+  }
+
+  .up-next-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #aaa;
+  }
+
+  #next-artist {
+    font-size: 20px;
+    margin-top: 10px;
+  }
+
+  #next-time {
+    color: #aaa;
+    margin-top: 5px;
   }
 
   button {
@@ -85,6 +119,7 @@
   }
 
   button:hover { background: #ffe980; }
+  button:focus-visible { outline: 3px solid white; outline-offset: 4px; }
 
   #status {
     margin: 20px 0;
@@ -92,6 +127,7 @@
     min-height: 22px;
   }
 
+  /* Audio stays functional but has no visible controls. */
   #player { display: none; }
 
   .schedule {
@@ -111,17 +147,28 @@
 
 <div class="stage">
   <h2>🎪 MAIN STAGE</h2>
-  <p class="live" id="live-indicator">● LIVE NOW</p>
+  <p class="live" id="live-indicator">● CHECKING...</p>
 
   <div class="now-playing">
     <div class="now-playing-label">NOW PLAYING</div>
+
     <div id="artist">Loading schedule...</div>
+    <div id="set-title"></div>
+    <div id="set-year"></div>
     <div id="set-time"></div>
+
+    <div class="up-next">
+      <div class="up-next-label">UP NEXT</div>
+      <div id="next-artist"></div>
+      <div id="next-time"></div>
+    </div>
   </div>
 
   <button id="join-button" type="button">▶ JOIN MAIN STAGE</button>
 
-  <p id="status" aria-live="polite">Connecting to festival clock...</p>
+  <p id="status" aria-live="polite">
+    Connecting to festival clock...
+  </p>
 
   <audio id="player" preload="none"></audio>
 
@@ -131,6 +178,11 @@
 </div>
 
 <script>
+
+// ======================================================
+// BIT FEST — AUDIO FILES
+// ======================================================
+
 const BASE_URL =
   "https://pub-36cd4f34933e414481fb1cf9f28e133e.r2.dev/";
 
@@ -141,6 +193,33 @@ const PARTS = [
   { file: "bitfest-mainstage-04.mp3", duration: 6*3600 + 41*60 + 56 }
 ];
 
+// ======================================================
+// BIT FEST — MAIN STAGE LINEUP
+// ======================================================
+
+const LINEUP = [
+  { time: "08:55:00", artist: "Sketchy Traits", title: "Dusty Decks", year: 2017 },
+  { time: "09:30:00", artist: "JPod", title: "BlissCoast 10", year: 2023 },
+  { time: "10:30:00", artist: "A.Skillz", title: "Annie Nightingale Guest Mix", year: 2009 },
+  { time: "11:00:00", artist: "Twogood", title: "Glastonbury Live Mix", year: 2017 },
+  { time: "12:00:00", artist: "Mista Trick", title: "Dubtendo", year: 2016 },
+  { time: "13:00:00", artist: "Featurecast", title: "The Main Event! Promo Mix", year: 2012 },
+  { time: "13:30:00", artist: "Spin Kringle", title: "Hello I Am Fruit Salad", year: 2023 },
+  { time: "14:30:00", artist: "DJs From Mars", title: "The History of Electronic Dance Music", year: 2017 },
+  { time: "14:35:00", artist: "CMC & Silenta", title: "Shambhala Mix", year: 2013 },
+  { time: "16:05:00", artist: "Neon Steve", title: "Fractal Forest (Shambhala)", year: 2012 },
+  { time: "17:35:00", artist: "Slynk", title: "Fractal Forest (Shambhala)", year: 2013 },
+  { time: "19:25:00", artist: "Smalltown DJs", title: "Bass Coast", year: 2017 },
+  { time: "21:00:00", artist: "Jack Beats", title: "Night Bass NYE", year: 2015 },
+  { time: "22:00:00", artist: "DJ Zinc", title: "Crack House Mix", year: 2012 },
+  { time: "23:10:00", artist: "Plump DJs", title: "Bonsai Kat 'Bla Bla Bla Bla' Mix", year: 2022 },
+  { time: "23:55:00", artist: "Deekline & Ed Solo", title: "Boomtown Sector 6", year: 2017 }
+];
+
+// ======================================================
+// FESTIVAL SETTINGS
+// ======================================================
+
 const START_SECONDS = 8*3600 + 55*60;
 const TOTAL_DURATION = PARTS.reduce((sum, p) => sum + p.duration, 0);
 
@@ -148,7 +227,11 @@ const player = document.getElementById("player");
 const status = document.getElementById("status");
 const clock = document.getElementById("clock");
 const artist = document.getElementById("artist");
+const setTitle = document.getElementById("set-title");
+const setYear = document.getElementById("set-year");
 const setTime = document.getElementById("set-time");
+const nextArtist = document.getElementById("next-artist");
+const nextTime = document.getElementById("next-time");
 const button = document.getElementById("join-button");
 const indicator = document.getElementById("live-indicator");
 
@@ -157,6 +240,10 @@ let currentPart = -1;
 let loadToken = 0;
 let loading = false;
 let lastRecovery = 0;
+
+// ======================================================
+// UK CLOCK
+// ======================================================
 
 function ukTime() {
   const values = new Intl.DateTimeFormat("en-GB", {
@@ -202,6 +289,80 @@ function formatTime(seconds) {
     .join(":");
 }
 
+// ======================================================
+// NOW PLAYING — DJ SCHEDULE
+// ======================================================
+
+const SCHEDULE = LINEUP.map(set => {
+  const [h, m, s] = set.time.split(":").map(Number);
+  const start = h*3600 + m*60 + s;
+
+  return {
+    ...set,
+    offset: (start - START_SECONDS + 86400) % 86400
+  };
+}).sort((a, b) => a.offset - b.offset);
+
+function getCurrentSet(elapsed) {
+  if (elapsed >= TOTAL_DURATION) return null;
+
+  let index = -1;
+
+  for (let i = 0; i < SCHEDULE.length; i++) {
+    if (elapsed >= SCHEDULE[i].offset) {
+      index = i;
+    } else {
+      break;
+    }
+  }
+
+  if (index < 0) return null;
+
+  return {
+    current: SCHEDULE[index],
+    next: SCHEDULE[index + 1] || null,
+    endOffset: SCHEDULE[index + 1]?.offset ?? TOTAL_DURATION
+  };
+}
+
+function updateNowPlaying(elapsed) {
+  const set = getCurrentSet(elapsed);
+
+  if (!set) {
+    artist.textContent = "Main Stage Closed";
+    setTitle.textContent = "";
+    setYear.textContent = "";
+    setTime.textContent = "Back at 08:55 UK time";
+    nextArtist.textContent = "Sketchy Traits";
+    nextTime.textContent = "08:55";
+    return;
+  }
+
+  artist.textContent = set.current.artist;
+  setTitle.textContent = set.current.title;
+  setYear.textContent = `Original mix: ${set.current.year}`;
+
+  const start = set.current.time.slice(0, 5);
+  const end = set.next
+    ? set.next.time.slice(0, 5)
+    : "00:56";
+
+  setTime.textContent = `${start} – ${end} UK time`;
+
+  if (set.next) {
+    nextArtist.textContent = set.next.artist;
+    nextTime.textContent =
+      `${set.next.time.slice(0, 5)} · ${set.next.title}`;
+  } else {
+    nextArtist.textContent = "Festival closes at 00:56";
+    nextTime.textContent = "Back tomorrow at 08:55";
+  }
+}
+
+// ======================================================
+// LIVE DISPLAY AND SYNCHRONISATION
+// ======================================================
+
 function updateDisplay() {
   const now = ukTime();
   clock.textContent = "🇬🇧 UK TIME: " + formatTime(now);
@@ -209,27 +370,24 @@ function updateDisplay() {
   const elapsed = festivalSeconds();
   const target = findPart(elapsed);
 
+  updateNowPlaying(elapsed);
+
   if (!target) {
     indicator.textContent = "● OFF AIR";
     indicator.style.color = "#888";
-    artist.textContent = "Main Stage Closed";
-    setTime.textContent = "Back at 08:55 UK time";
-    status.textContent = "🌙 Festival returns at 08:55.";
 
     if (joined) stopListening();
+
+    status.textContent = "🌙 Festival returns at 08:55.";
     return;
   }
 
   indicator.textContent = "● LIVE NOW";
   indicator.style.color = "#ff5555";
 
-  // Placeholder until we add the actual DJ timetable.
-  artist.textContent = "Main Stage — Part " + (target.index + 1);
-  setTime.textContent =
-    "Festival running time: " + formatTime(elapsed);
-
   if (!joined) {
-    status.textContent = "Press JOIN to tune into the live Main Stage.";
+    status.textContent =
+      "Press JOIN to tune into the live Main Stage.";
     return;
   }
 
@@ -238,7 +396,7 @@ function updateDisplay() {
     return;
   }
 
-  // Correct drift after buffering, background tabs or laptop sleep.
+  // Correct drift after buffering, background tabs or sleep.
   if (!loading && player.readyState >= 1 && !player.seeking) {
     const drift = Math.abs(player.currentTime - target.offset);
 
@@ -247,14 +405,14 @@ function updateDisplay() {
     }
   }
 
-  // Recover playback if the browser interrupted it.
+  // Recover playback if interrupted by the browser.
   if (!loading && player.paused &&
       Date.now() - lastRecovery > 5000) {
     lastRecovery = Date.now();
 
     player.play().catch(() => {
       status.textContent =
-        "Playback paused by browser — press JOIN to resume.";
+        "Playback paused — press JOIN to resume.";
     });
   }
 }
@@ -343,10 +501,12 @@ function joinOrLeave() {
   loadPart(target.index);
 }
 
-// Check the clock every second.
+// ======================================================
+// EVENT LISTENERS
+// ======================================================
+
 setInterval(updateDisplay, 1000);
 
-// Immediately resync when returning to the page.
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) updateDisplay();
 });
@@ -369,6 +529,7 @@ player.addEventListener("error", () => {
 button.addEventListener("click", joinOrLeave);
 
 updateDisplay();
+
 </script>
 
 </body>

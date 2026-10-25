@@ -6,24 +6,32 @@
 <title>BIT Fest — Back In Time Festival</title>
 
 <style>
+  * { box-sizing: border-box; }
+
   body {
     background: #101018;
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
     padding: 40px 20px;
+    margin: 0;
   }
 
   h1 {
     font-size: clamp(42px, 8vw, 90px);
-    margin-bottom: 5px;
+    margin: 0 0 5px;
     color: #ffdb4d;
   }
 
   .subtitle {
     font-size: 20px;
     color: #aaa;
-    margin-bottom: 45px;
+    margin-bottom: 35px;
+  }
+
+  .clock {
+    font-size: 22px;
+    margin-bottom: 25px;
   }
 
   .stage {
@@ -35,6 +43,36 @@
     margin: auto;
   }
 
+  .live {
+    color: #ff5555;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+
+  .now-playing {
+    background: #151520;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 25px 0;
+  }
+
+  .now-playing-label {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: #aaa;
+  }
+
+  #artist {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 12px 0;
+  }
+
+  #set-time {
+    color: #aaa;
+    font-size: 15px;
+  }
+
   button {
     background: #ffdb4d;
     border: none;
@@ -43,25 +81,23 @@
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
+    min-width: 230px;
   }
 
-  button:hover {
-    background: #ffe980;
-  }
+  button:hover { background: #ffe980; }
 
   #status {
     margin: 20px 0;
     color: #ccc;
+    min-height: 22px;
   }
 
-  audio {
-    width: 100%;
-    margin-top: 20px;
-  }
+  #player { display: none; }
 
-  .clock {
-    font-size: 22px;
-    margin-bottom: 25px;
+  .schedule {
+    color: #aaa;
+    font-size: 14px;
+    margin-top: 22px;
   }
 </style>
 </head>
@@ -75,18 +111,28 @@
 
 <div class="stage">
   <h2>🎪 MAIN STAGE</h2>
-  <p>16 hours of music. Every day. Live in sync.</p>
+  <p class="live" id="live-indicator">● LIVE NOW</p>
 
-  <button onclick="playLive()">▶ JOIN MAIN STAGE</button>
+  <div class="now-playing">
+    <div class="now-playing-label">NOW PLAYING</div>
+    <div id="artist">Loading schedule...</div>
+    <div id="set-time"></div>
+  </div>
 
-  <p id="status">Press JOIN to tune into the festival.</p>
+  <button id="join-button" type="button">▶ JOIN MAIN STAGE</button>
 
-  <audio id="player" controls preload="metadata"></audio>
+  <p id="status" aria-live="polite">Connecting to festival clock...</p>
+
+  <audio id="player" preload="none"></audio>
+
+  <div class="schedule">
+    Daily: 08:55 – 00:56 UK time
+  </div>
 </div>
 
 <script>
-
-const BASE_URL = "https://pub-36cd4f34933e414481fb1cf9f28e133e.r2.dev/";
+const BASE_URL =
+  "https://pub-36cd4f34933e414481fb1cf9f28e133e.r2.dev/";
 
 const PARTS = [
   { file: "bitfest-mainstage-01.mp3", duration: 3*3600 + 6*60 + 36 },
@@ -95,55 +141,52 @@ const PARTS = [
   { file: "bitfest-mainstage-04.mp3", duration: 6*3600 + 41*60 + 56 }
 ];
 
-const START_HOUR = 11;
-const START_MINUTE = 55;
-const TOTAL_DURATION = PARTS.reduce((sum, part) => sum + part.duration, 0);
+const START_SECONDS = 8*3600 + 55*60;
+const TOTAL_DURATION = PARTS.reduce((sum, p) => sum + p.duration, 0);
 
 const player = document.getElementById("player");
 const status = document.getElementById("status");
 const clock = document.getElementById("clock");
+const artist = document.getElementById("artist");
+const setTime = document.getElementById("set-time");
+const button = document.getElementById("join-button");
+const indicator = document.getElementById("live-indicator");
 
 let joined = false;
 let currentPart = -1;
-let loadingToken = 0;
+let loadToken = 0;
+let loading = false;
+let lastRecovery = 0;
 
-// Get the current UK time, accounting for daylight saving.
-function ukNow() {
-  const parts = new Intl.DateTimeFormat("en-GB", {
+function ukTime() {
+  const values = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/London",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hourCycle: "h23"
   }).formatToParts(new Date());
 
-  return Object.fromEntries(parts.map(p => [p.type, Number(p.value)]));
+  const t = Object.fromEntries(
+    values.filter(x => x.type !== "literal")
+          .map(x => [x.type, Number(x.value)])
+  );
+
+  return t.hour*3600 + t.minute*60 + t.second;
 }
 
-// Seconds elapsed since the most recent 11:55 UK start.
 function festivalSeconds() {
-  const now = ukNow();
-  const secondsToday = now.hour*3600 + now.minute*60 + now.second;
-  const startSeconds = START_HOUR*3600 + START_MINUTE*60;
-
-  let elapsed = secondsToday - startSeconds;
-
-  if (elapsed < 0) elapsed += 24*3600;
-
-  return elapsed;
+  return (ukTime() - START_SECONDS + 86400) % 86400;
 }
 
 function findPart(elapsed) {
-  let remaining = elapsed;
+  let offset = elapsed;
 
   for (let i = 0; i < PARTS.length; i++) {
-    if (remaining < PARTS[i].duration) {
-      return { index: i, offset: remaining };
+    if (offset < PARTS[i].duration) {
+      return { index: i, offset };
     }
-    remaining -= PARTS[i].duration;
+    offset -= PARTS[i].duration;
   }
 
   return null;
@@ -154,102 +197,178 @@ function formatTime(seconds) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
 
-  return [h,m,s].map(n => String(n).padStart(2,"0")).join(":");
+  return [h, m, s]
+    .map(x => String(x).padStart(2, "0"))
+    .join(":");
 }
 
-function updateClock() {
-  const now = ukNow();
-  clock.textContent =
-    `🇬🇧 UK TIME: ${String(now.hour).padStart(2,"0")}:${String(now.minute).padStart(2,"0")}:${String(now.second).padStart(2,"0")}`;
+function updateDisplay() {
+  const now = ukTime();
+  clock.textContent = "🇬🇧 UK TIME: " + formatTime(now);
 
   const elapsed = festivalSeconds();
+  const target = findPart(elapsed);
 
-  if (elapsed >= TOTAL_DURATION) {
-    status.textContent = "🌙 Festival closed — returns at 11:55am UK time.";
-    if (joined) {
-      joined = false;
-      player.pause();
-      currentPart = -1;
-    }
+  if (!target) {
+    indicator.textContent = "● OFF AIR";
+    indicator.style.color = "#888";
+    artist.textContent = "Main Stage Closed";
+    setTime.textContent = "Back at 08:55 UK time";
+    status.textContent = "🌙 Festival returns at 08:55.";
+
+    if (joined) stopListening();
     return;
   }
+
+  indicator.textContent = "● LIVE NOW";
+  indicator.style.color = "#ff5555";
+
+  // Placeholder until we add the actual DJ timetable.
+  artist.textContent = "Main Stage — Part " + (target.index + 1);
+  setTime.textContent =
+    "Festival running time: " + formatTime(elapsed);
 
   if (!joined) {
-    status.textContent = `🟢 Festival LIVE — ${formatTime(elapsed)} into today's show.`;
+    status.textContent = "Press JOIN to tune into the live Main Stage.";
     return;
   }
-
-  const target = findPart(elapsed);
-  if (!target) return;
 
   if (target.index !== currentPart) {
-    loadPart(target.index, target.offset);
+    loadPart(target.index);
     return;
   }
 
-  // Keep playback aligned with the festival clock.
-  if (player.readyState >= 1 && !player.seeking &&
-      Math.abs(player.currentTime - target.offset) > 5) {
-    player.currentTime = target.offset;
+  // Correct drift after buffering, background tabs or laptop sleep.
+  if (!loading && player.readyState >= 1 && !player.seeking) {
+    const drift = Math.abs(player.currentTime - target.offset);
+
+    if (drift > 3) {
+      player.currentTime = target.offset;
+    }
+  }
+
+  // Recover playback if the browser interrupted it.
+  if (!loading && player.paused &&
+      Date.now() - lastRecovery > 5000) {
+    lastRecovery = Date.now();
+
+    player.play().catch(() => {
+      status.textContent =
+        "Playback paused by browser — press JOIN to resume.";
+    });
   }
 }
 
-function loadPart(index, offset) {
-  const token = ++loadingToken;
+function loadPart(index) {
+  const token = ++loadToken;
   currentPart = index;
+  loading = true;
 
   player.pause();
   player.src = BASE_URL + PARTS[index].file;
   player.load();
 
-  status.textContent = `⏳ Loading Main Stage — Part ${index+1}...`;
+  status.textContent = "⏳ Connecting to Main Stage...";
 
-  player.addEventListener("loadedmetadata", function ready() {
-    if (token !== loadingToken) return;
+  function ready() {
+    if (token !== loadToken || !joined) return;
 
-    const elapsed = festivalSeconds();
-    const target = findPart(elapsed);
+    const target = findPart(festivalSeconds());
 
-    if (!target || target.index !== index || !joined) return;
+    if (!target || target.index !== index) {
+      loading = false;
+      updateDisplay();
+      return;
+    }
 
-    player.currentTime = Math.min(target.offset, Math.max(0, player.duration - 0.5));
+    const safeOffset = Math.min(
+      target.offset,
+      Math.max(0, player.duration - 0.25)
+    );
 
-    player.play().then(() => {
-      status.textContent = `🔴 LIVE — Main Stage | Part ${index+1}`;
-    }).catch(() => {
-      status.textContent = "Tap play on the audio player to start.";
-    });
-  }, { once: true });
+    player.currentTime = safeOffset;
+
+    const start = () => {
+      if (token !== loadToken || !joined) return;
+
+      loading = false;
+
+      player.play().then(() => {
+        status.textContent = "🔊 Listening LIVE";
+      }).catch(() => {
+        status.textContent =
+          "Press JOIN to start playback.";
+      });
+    };
+
+    if (player.seeking) {
+      player.addEventListener("seeked", start, { once: true });
+    } else {
+      start();
+    }
+  }
+
+  player.addEventListener("loadedmetadata", ready, { once: true });
 }
 
-function playLive() {
-  const elapsed = festivalSeconds();
+function stopListening() {
+  joined = false;
+  loadToken++;
+  currentPart = -1;
+  loading = false;
 
-  if (elapsed >= TOTAL_DURATION) {
-    status.textContent = "🌙 Festival closed — returns at 11:55am UK time.";
+  player.pause();
+  player.removeAttribute("src");
+  player.load();
+
+  button.textContent = "▶ JOIN MAIN STAGE";
+}
+
+function joinOrLeave() {
+  if (joined) {
+    stopListening();
+    updateDisplay();
+    return;
+  }
+
+  const target = findPart(festivalSeconds());
+
+  if (!target) {
+    status.textContent = "Festival is currently closed.";
     return;
   }
 
   joined = true;
-  const target = findPart(elapsed);
-
-  if (target.index === currentPart && player.readyState >= 1) {
-    player.currentTime = target.offset;
-    player.play().catch(() => {
-      status.textContent = "Tap play on the audio player to start.";
-    });
-  } else {
-    loadPart(target.index, target.offset);
-  }
+  button.textContent = "■ LEAVE MAIN STAGE";
+  loadPart(target.index);
 }
 
-player.addEventListener("ended", () => {
-  if (joined) updateClock();
+// Check the clock every second.
+setInterval(updateDisplay, 1000);
+
+// Immediately resync when returning to the page.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) updateDisplay();
 });
 
-setInterval(updateClock, 1000);
-updateClock();
+window.addEventListener("focus", updateDisplay);
+window.addEventListener("pageshow", updateDisplay);
 
+player.addEventListener("ended", () => {
+  if (joined) updateDisplay();
+});
+
+player.addEventListener("error", () => {
+  if (joined) {
+    loading = false;
+    status.textContent =
+      "Audio connection interrupted. Press LEAVE, then JOIN to reconnect.";
+  }
+});
+
+button.addEventListener("click", joinOrLeave);
+
+updateDisplay();
 </script>
 
 </body>

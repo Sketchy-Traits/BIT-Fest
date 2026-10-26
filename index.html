@@ -45,10 +45,10 @@ const $=id=>document.getElementById(id),player=$('player');
 const toSec=t=>{const [h,m]=t.split(':').map(Number);return h*3600+m*60};
 SETS.forEach(s=>s.offset=(toSec(s.time)-START+86400)%86400);
 let joined=false,currentSet=-1,activeBg='bgA',partIndex=-1,loadToken=0,lastSync=0;
-let userPaused=false,internalPause=false;
-function pauseInternally(){internalPause=true;player.pause();internalPause=false}
+let userPaused=false,internalPause=false,internalPauseUntil=0;
+function pauseInternally(){internalPause=true;internalPauseUntil=Date.now()+1500;player.pause();internalPause=false}
 player.addEventListener('pause',()=>{
-  if(joined&&!internalPause&&!player.ended){
+  if(joined&&!internalPause&&Date.now()>internalPauseUntil&&!player.ended){
     userPaused=true;
     $('joinBtn').textContent='▶ RESUME MAIN STAGE';
     status('Paused from your device. Tap RESUME to continue live.');
@@ -69,7 +69,7 @@ player.addEventListener('play',()=>{
 // Explicitly handle lock-screen / notification controls where supported.
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('play',()=>resumeLive());
-  navigator.mediaSession.setActionHandler('pause',()=>player.pause());
+  navigator.mediaSession.setActionHandler('pause',()=>{userPaused=true;player.pause();$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin live.')});
   for(const action of ['seekbackward','seekforward','previoustrack','nexttrack','seekto']){
     try{navigator.mediaSession.setActionHandler(action,null)}catch(e){}
   }
@@ -98,7 +98,7 @@ function resumeLive(){
   player.play().catch(()=>status('Tap RESUME on the website to rejoin live.'));
 }
 function loadPart(index){const token=++loadToken;partIndex=index;pauseInternally();player.src=AUDIO_ROOT+PARTS[index].file;player.load();status('Connecting to the archive…');const seekAndPlay=()=>{if(token!==loadToken||!joined)return;const part=locatePart(elapsedNow());if(!part||part.index!==index){tick();return}try{player.currentTime=Math.max(0,Math.min(part.offset,Math.max(0,(player.duration||PARTS[index].duration)-.1)))}catch(e){status('Audio is loading…');return}const play=()=>{if(token!==loadToken||!joined||userPaused)return;player.play().then(()=>status('● CONNECTION ESTABLISHED · YOU ARE LISTENING TO '+SETS[getSetIndex(elapsedNow())].year)).catch(()=>status('Tap TUNE IN again if your browser blocked playback.'))};if(player.seeking)player.addEventListener('seeked',play,{once:true});else play()};if(player.readyState>=1)seekAndPlay();else player.addEventListener('loadedmetadata',seekAndPlay,{once:true})}
-function tick(){const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Back tomorrow at 08:55 UK time.');return}if(!joined||userPaused)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused)player.play().catch(()=>status('Playback paused by your browser — tap TUNE IN again.'))}}
+function tick(){const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Back tomorrow at 08:55 UK time.');return}if(!joined||userPaused)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused){userPaused=true;$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin the live broadcast.')}}}
 $('joinBtn').addEventListener('click',()=>{if(joined){if(player.paused){resumeLive()}else stop();return}const part=locatePart(elapsedNow());if(!part)return;joined=true;$('joinBtn').textContent='■ DISCONNECT';loadPart(part.index)});
 player.addEventListener('ended',()=>{if(joined)tick()});player.addEventListener('error',()=>{if(joined)status('Audio could not load. Check your connection and try tuning in again.')});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);window.addEventListener('pageshow',tick);tick();setInterval(tick,1000);
 </script>

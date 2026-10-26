@@ -1,536 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BIT Fest — Back In Time Festival</title>
-
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#100b1c">
+<title>BIT FEST — The Archive Is Alive</title>
 <style>
-  * { box-sizing: border-box; }
-
-  body {
-    background: #101018;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 40px 20px;
-    margin: 0;
-  }
-
-  h1 {
-    font-size: clamp(42px, 8vw, 90px);
-    margin: 0 0 5px;
-    color: #ffdb4d;
-  }
-
-  .subtitle {
-    font-size: 20px;
-    color: #aaa;
-    margin-bottom: 35px;
-  }
-
-  .clock {
-    font-size: 22px;
-    margin-bottom: 25px;
-  }
-
-  .stage {
-    background: #202030;
-    border: 2px solid #ffdb4d;
-    border-radius: 16px;
-    padding: 30px;
-    max-width: 650px;
-    margin: auto;
-  }
-
-  .live {
-    color: #ff5555;
-    font-weight: bold;
-    letter-spacing: 2px;
-  }
-
-  .now-playing {
-    background: #151520;
-    border-radius: 12px;
-    padding: 25px 20px;
-    margin: 25px 0;
-  }
-
-  .now-playing-label {
-    font-size: 13px;
-    letter-spacing: 3px;
-    color: #aaa;
-  }
-
-  #artist {
-    font-size: 32px;
-    font-weight: bold;
-    margin: 14px 0 8px;
-    color: #ffdb4d;
-  }
-
-  #set-title {
-    font-size: 19px;
-    margin-bottom: 6px;
-  }
-
-  #set-year {
-    color: #aaa;
-    font-size: 15px;
-  }
-
-  #set-time {
-    color: #aaa;
-    font-size: 14px;
-    margin-top: 14px;
-  }
-
-  .up-next {
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #444;
-  }
-
-  .up-next-label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: #aaa;
-  }
-
-  #next-artist {
-    font-size: 20px;
-    margin-top: 10px;
-  }
-
-  #next-time {
-    color: #aaa;
-    margin-top: 5px;
-  }
-
-  button {
-    background: #ffdb4d;
-    border: none;
-    border-radius: 8px;
-    padding: 15px 30px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    min-width: 230px;
-  }
-
-  button:hover { background: #ffe980; }
-  button:focus-visible { outline: 3px solid white; outline-offset: 4px; }
-
-  #status {
-    margin: 20px 0;
-    color: #ccc;
-    min-height: 22px;
-  }
-
-  /* Audio stays functional but has no visible controls. */
-  #player { display: none; }
-
-  .schedule {
-    color: #aaa;
-    font-size: 14px;
-    margin-top: 22px;
-  }
+:root{--pink:#ff5bd5;--mint:#75ffe0;--yellow:#ffe66a;--ink:#100b1c;--white:#fff8f1}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ink);color:var(--white);font-family:Arial,Helvetica,sans-serif;overflow-x:hidden}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--yellow);outline-offset:4px}.backdrops,.backdrop,.shade,.scanlines{position:fixed;inset:0;pointer-events:none}.backdrops{z-index:-3;background:#23142e}.backdrop{background-position:center;background-size:cover;opacity:0;transition:opacity 1.8s ease;filter:saturate(1.25) contrast(1.05)}.backdrop.active{opacity:1}.shade{z-index:-2;background:linear-gradient(90deg,rgba(9,6,20,.92),rgba(12,6,25,.55) 55%,rgba(12,6,25,.65)),linear-gradient(0deg,rgba(9,6,20,.92),transparent 50%,rgba(9,6,20,.35))}.scanlines{z-index:5;opacity:.13;background:repeating-linear-gradient(0deg,transparent 0 3px,#000 4px 5px);mix-blend-mode:multiply}.shell{max-width:1250px;margin:auto;padding:20px clamp(16px,4vw,50px) 60px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}.brand{font-weight:1000;font-size:clamp(2.2rem,7vw,5.2rem);letter-spacing:-.09em;line-height:1;text-shadow:5px 5px 0 #b0208f,9px 9px 0 #182e56}.brand span{color:var(--yellow)}.tagline{font-size:.67rem;letter-spacing:.3em;font-weight:900;margin:14px 0 0;color:var(--mint)}.clock{text-align:right;font-family:monospace;font-size:1rem;background:#130e23ba;border:1px solid #ffffff55;padding:13px 16px;border-radius:12px}.clock strong{color:var(--yellow);display:block;font-size:1.5rem}.ticker{margin:24px 0 16px;display:flex;gap:14px;align-items:center;font:800 .75rem monospace;letter-spacing:.12em}.dot{height:10px;width:10px;background:#ff3d63;border-radius:50%;box-shadow:0 0 12px #ff3d63;display:inline-block;animation:pulse 1.5s infinite}.ticker .muted{color:#c9c1dc}.hero{position:relative;min-height:520px;border:2px solid #a9fbea77;border-radius:20px;overflow:hidden;background:linear-gradient(130deg,#140c2abb,#210e39a8);box-shadow:0 20px 65px #0008,0 0 35px #c65af633;display:flex;align-items:center}.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,#ff39a625,transparent 40%),linear-gradient(135deg,#58ffd70a,transparent 55%);pointer-events:none}.hero:after{content:"◈  ARCHIVE FREQUENCY  ◈";position:absolute;right:18px;top:20px;font:700 .7rem monospace;letter-spacing:.2em;color:#ffffff99}.hero-content{position:relative;width:100%;padding:clamp(22px,5vw,58px);display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,340px);gap:clamp(20px,4vw,60px);align-items:center}.eyebrow{font:800 .82rem monospace;color:var(--mint);letter-spacing:.18em;margin-bottom:18px}.year{font-size:clamp(4.7rem,13vw,10rem);font-weight:1000;line-height:.83;letter-spacing:-.09em;color:var(--yellow);text-shadow:5px 5px 0 #ef36a0,10px 10px 30px #000a;margin:0 0 30px}.artist{font-size:clamp(2.3rem,5.5vw,5.2rem);font-weight:1000;line-height:.98;letter-spacing:-.055em;text-transform:uppercase;overflow-wrap:anywhere;margin:0 0 12px}.mix{font-size:clamp(1rem,2vw,1.4rem);font-weight:700;color:#f6d9f2;line-height:1.4}.settime{margin-top:15px;color:var(--mint);font:700 .92rem monospace}.cta{margin-top:30px;background:var(--yellow);color:#130d20;border:0;padding:18px 25px;border-radius:12px;font-size:1.03rem;font-weight:1000;letter-spacing:.04em;box-shadow:6px 6px 0 var(--pink);min-height:56px;max-width:100%;transition:transform .2s,box-shadow .2s}.cta:hover{transform:translate(2px,2px);box-shadow:4px 4px 0 var(--pink)}.cta:disabled{opacity:.55;cursor:not-allowed}.status{font:700 .8rem monospace;margin-top:17px;color:#ddd6e9;min-height:20px}.portrait-frame{padding:9px;background:linear-gradient(145deg,var(--pink),var(--mint));transform:rotate(3deg);box-shadow:13px 15px 0 #05010db0;max-width:340px}.portrait{display:block;aspect-ratio:1;object-fit:cover;width:100%;background:#342148}.portrait-caption{background:#100b1c;color:var(--mint);font:800 .7rem monospace;letter-spacing:.12em;padding:12px 8px;text-align:center}.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,340px);gap:20px;margin-top:22px}.panel{background:#0d091bdc;border:1px solid #ffffff42;border-radius:15px;padding:24px;backdrop-filter:blur(12px)}.panel h2{margin:0 0 16px;font-size:1.25rem;letter-spacing:.12em}.next-name{font-size:clamp(1.6rem,3vw,2.3rem);font-weight:1000;text-transform:uppercase}.next-info{color:var(--mint);font:700 .87rem monospace;margin-top:10px}.countdown{font:900 1.6rem monospace;color:var(--yellow);margin-top:14px}.archive-note{line-height:1.65;color:#d9d1e8;font-size:.94rem}.archive-note strong{color:var(--yellow)}.lineup-title{margin:45px 0 8px;font-size:clamp(1.7rem,4vw,2.6rem);letter-spacing:-.04em}.lineup-sub{color:#d9d1e8;margin:0 0 20px}.lineup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.slot{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:12px;padding:15px 16px;border-radius:12px;border:1px solid #ffffff32;background:#0d091bd9;min-width:0}.slot.current{border-color:var(--mint);background:#2a1845ed;box-shadow:inset 4px 0 0 var(--mint)}.slot .time{color:var(--yellow);font:800 .9rem monospace}.slot .who{font-weight:900;font-size:1rem;overflow-wrap:anywhere}.slot .title{font-size:.8rem;color:#c9bfd9;margin-top:4px}.slot .yr{font:800 .85rem monospace;color:var(--mint)}.slot .badge{font:800 .65rem monospace;color:var(--mint);margin-top:5px;text-align:right}.footer{padding:35px 0 0;color:#d9d1e8;font:.8rem monospace;line-height:1.6}.footer strong{color:var(--yellow)}@keyframes pulse{50%{opacity:.4}}@media(max-width:780px){.hero-content{grid-template-columns:1fr}.hero{min-height:0}.portrait-frame{width:min(100%,290px);margin:0 auto;transform:rotate(2deg)}.lower{grid-template-columns:1fr}.lineup{grid-template-columns:1fr}.clock{font-size:.76rem}.clock strong{font-size:1.1rem}}@media(max-width:430px){.shell{padding:18px 14px 50px}.topbar{align-items:flex-start}.clock{width:100%;text-align:left}.hero-content{padding:25px 18px}.year{font-size:5.3rem}.slot{grid-template-columns:57px 1fr 45px;gap:7px;padding:13px 10px}.slot .who{font-size:.93rem}.slot .yr{font-size:.75rem}.tagline{letter-spacing:.14em}.hero:after{display:none}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
-
 <body>
-
-<h1>BIT FEST</h1>
-<div class="subtitle">BACK IN TIME FESTIVAL</div>
-
-<div class="clock" id="clock"></div>
-
-<div class="stage">
-  <h2>🎪 MAIN STAGE</h2>
-  <p class="live" id="live-indicator">● CHECKING...</p>
-
-  <div class="now-playing">
-    <div class="now-playing-label">NOW PLAYING</div>
-
-    <div id="artist">Loading schedule...</div>
-    <div id="set-title"></div>
-    <div id="set-year"></div>
-    <div id="set-time"></div>
-
-    <div class="up-next">
-      <div class="up-next-label">UP NEXT</div>
-      <div id="next-artist"></div>
-      <div id="next-time"></div>
-    </div>
-  </div>
-
-  <button id="join-button" type="button">▶ JOIN MAIN STAGE</button>
-
-  <p id="status" aria-live="polite">
-    Connecting to festival clock...
-  </p>
-
-  <audio id="player" preload="none"></audio>
-
-  <div class="schedule">
-    Daily: 08:55 – 00:56 UK time
-  </div>
-</div>
-
+<div class="backdrops" aria-hidden="true"><div class="backdrop active" id="bgA"></div><div class="backdrop" id="bgB"></div></div><div class="shade" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>
+<main class="shell"><header class="topbar"><div><div class="brand">BIT <span>FEST</span></div><p class="tagline">BACK IN TIME FESTIVAL · THE ARCHIVE IS ALIVE</p></div><div class="clock">UK TRANSMISSION TIME<strong id="clock">--:--:--</strong></div></header>
+<div class="ticker"><span class="dot" id="liveDot"></span><span id="broadcastLabel">MAIN STAGE / CONNECTING TO ARCHIVE</span><span class="muted">◈ EST. IN THE PAST · LIVE IN THE PRESENT</span></div>
+<section class="hero" aria-label="Main Stage"><div class="hero-content"><div><div class="eyebrow" id="eyebrow">◉ NOW TRANSMITTING / MAIN STAGE</div><div class="year" id="year">----</div><h1 class="artist" id="artist">BIT FEST</h1><div class="mix" id="mix">Finding the current transmission…</div><div class="settime" id="settime">UK TIME</div><button class="cta" id="joinBtn" type="button">▶ TUNE INTO MAIN STAGE</button><div class="status" id="status" role="status" aria-live="polite">Audio starts when you tune in.</div></div><div class="portrait-frame"><img class="portrait" id="portrait" alt="Current DJ artwork" referrerpolicy="no-referrer"><div class="portrait-caption" id="portraitCaption">ARCHIVE FILE / MAIN STAGE</div></div></div></section>
+<section class="lower"><div class="panel"><h2>↗ UP NEXT</h2><div class="next-name" id="nextName">Loading…</div><div class="next-info" id="nextInfo">UK TIME</div><div class="countdown" id="countdown">--:--:--</div></div><div class="panel"><h2>◈ HOW IT WORKS</h2><div class="archive-note">These mixes were recorded <strong>back in time</strong>. Everyone tuning in hears the <strong>same point in the festival</strong>, according to UK time. No skipping, no rewinding — just the moment we're in. The Main Stage broadcasts daily from <strong>08:55 UK time</strong>.</div></div></section>
+<h2 class="lineup-title">THE ARCHIVE / LINEUP</h2><p class="lineup-sub">16 transmissions. One Main Stage. A trip through the years.</p><section class="lineup" id="lineup" aria-label="Main Stage timetable"></section>
+<footer class="footer"><strong>BIT FEST</strong> · A time-synchronised music festival on your computer or phone.<br>All times UK local. Artwork and photographs credited to their respective creators; image availability may vary.</footer></main>
+<audio id="player" preload="auto" playsinline></audio>
 <script>
-
-// ======================================================
-// BIT FEST — AUDIO FILES
-// ======================================================
-
-const BASE_URL =
-  "https://pub-36cd4f34933e414481fb1cf9f28e133e.r2.dev/";
-
-const PARTS = [
-  { file: "bitfest-mainstage-01.mp3", duration: 3*3600 + 6*60 + 36 },
-  { file: "bitfest-mainstage-02.mp3", duration: 3*3600 + 6*60 + 36 },
-  { file: "bitfest-mainstage-03.mp3", duration: 3*3600 + 6*60 + 36 },
-  { file: "bitfest-mainstage-04.mp3", duration: 6*3600 + 41*60 + 56 }
+'use strict';
+const AUDIO_ROOT='https://pub-36cd4f34933e414481fb1cf9f28e133e.r2.dev/';
+const PARTS=[{file:'bitfest-mainstage-01.mp3',duration:11196},{file:'bitfest-mainstage-02.mp3',duration:11196},{file:'bitfest-mainstage-03.mp3',duration:11196},{file:'bitfest-mainstage-04.mp3',duration:24116}];
+const START=8*3600+55*60;
+const TOTAL=PARTS.reduce((s,p)=>s+p.duration,0);
+// Location backgrounds and portraits: original supplied links. Some hosts may block hotlinking or expire.
+const SETS=[
+{time:'08:55',artist:'Sketchy Traits',mix:'Dusty Decks',year:2017,bg:'https://scontent-man2-1.xx.fbcdn.net/v/t39.30808-6/518316487_10163959581992755_215016099116710260_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=104&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=i5fPDFmBqKEQ7kNvwFDKMI8&_nc_oc=AdoFfuJhsz2EQy4HZcA0BRCGjZ_joEu9u35_p4xrOO2cMm_uUugZux1NRH18b1V2NCw&_nc_zt=23&_nc_ht=scontent-man2-1.xx&_nc_gid=iYU7mMArz52mYyVcPNhTVw&_nc_ss=7b2a8&oh=00_AQMuLQnvRibzbAln3x4DjYBCpQRtvIC4QyphSn7EwHSdJg&oe=6AE54C0B',photo:'https://scontent-man2-1.xx.fbcdn.net/v/t39.30808-6/445787730_10162064443657755_4268569786693878526_n.jpg?stp=dst-jpg_tt6&cstp=mx936x960&ctp=s936x960&_nc_cat=103&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=TT1CjPoky6AQ7kNvwGl-WZ7&_nc_oc=AdqHYHTAKLxpNhkrhzXPtsZXDfJihJm71mGZwpI56fDQ36jwmxc52KU6hrNbNCN-s2I&_nc_zt=23&_nc_ht=scontent-man2-1.xx&_nc_gid=myLNZR5AVfCx-ogjLNKYWA&_nc_ss=7b2a8&oh=00_AQMT7tm0vwe9T3d5hxCY3QS1-krCwPVlra_v6zPg42fjSg&oe=6AE56F1A'},
+{time:'09:30',artist:'JPod',mix:'BlissCoast 10',year:2023,bg:'https://saily.com/_next/image/?url=https%3A%2F%2Fsb.nordcdn.com%2Fm%2F7ce0379e117305c%2Foriginal%2Fsaily-blog-featured-best-music-festivals-in-the-world.jpg&w=2048&q=75',photo:'https://yt3.googleusercontent.com/ytc/AIdro_mjA6RorFoaljd0YqQToGuLW6bZJykUdwLytZ5wIcEkItQ=s900-c-k-c0x00ffffff-no-rj'},
+{time:'10:30',artist:'A.Skillz',mix:'Annie Nightingale Guest Mix',year:2009,bg:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBU9rVW1eo6dVYH04GPFC20Yjpn8LheHhuQvXPnWZlNmoRN_tPTLosTSA&s=10',photo:'https://i1.sndcdn.com/artworks-lHQvbve0eDpDhyKW-raZQKQ-t500x500.jpg'},
+{time:'11:00',artist:'Twogood',mix:'Glastonbury Live Mix',year:2017,bg:'https://i.guim.co.uk/img/media/27ade258254349dba77e73f90d39df85853f56f1/258_0_4680_3744/master/4680.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=6f96e8ffdb277fcb2d4ea88d44d6a13b',photo:'https://i1.sndcdn.com/artworks-000285109061-s4htnp-t1080x1080.jpg'},
+{time:'12:00',artist:'Mista Trick',mix:'Dubtendo',year:2016,bg:'https://skiddlebrands.imgix.net/brands/dubtendo_2.jpg?auto=format%2Ccompress',photo:'https://f4.bcbits.com/img/0041056258_10.jpg'},
+{time:'13:00',artist:'Featurecast',mix:'The Main Event! Promo Mix',year:2012,bg:'https://i1.sndcdn.com/artworks-000015420071-0jd6j8-t500x500.jpg',photo:'https://www.featurecast.co.uk/favicon.ico'},
+{time:'13:30',artist:'Spin Kringle',mix:'Hello I Am Fruit Salad',year:2023,bg:'https://i1.sndcdn.com/artworks-aXUmPxmvhVKRpjOy-HAD01A-t240x240.jpg',photo:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxdcwMeY2E8SC2C2NY15ferCDe5Jp-gBGZpZVkka2Oacn2YCnC-4aVWo4&s=10'},
+{time:'14:30',artist:'DJs From Mars',mix:'The History of Electronic Dance Music',year:2017,bg:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQljtpIe5DYVVyYfM5sj1KPALq6MSq8a9MA4H9LbSDhosubhZpt59AUpsI&s=10',photo:'https://cdn.shopify.com/s/files/1/0375/4790/1059/files/Live1_1024x1024.jpg?v=1615398520'},
+{time:'14:35',artist:'CMC & Silenta',mix:'Shambhala Mix',year:2013,bg:'https://cdn.prod.website-files.com/69f8e8518f9bb4f244841c63/69f8e8518f9bb4f24484207f_Caspian%20Kai%20Fractal%20Forest%20Shambhala%20Music%20Festival.webp',photo:'https://f4.bcbits.com/img/0037706188_10.jpg'},
+{time:'16:05',artist:'Neon Steve',mix:'Fractal Forest (Shambhala)',year:2012,bg:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTovxaTAsCCxYoB412Jf7GBDkeBqzu6GySoeXlUjJ20kVTRnhet0zFSgkw&s=10',photo:'https://i1.sndcdn.com/avatars-ah5ovye7jY28P5qK-bMtcYw-t1080x1080.jpg'},
+{time:'17:35',artist:'Slynk',mix:'Fractal Forest (Shambhala)',year:2013,bg:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaQsLt5XXZKNNboGUPusFEfh7EGRHUCUu6yxKrHRMITogBxX_2vETxogeO&s=10',photo:'https://b730228.assetcdn.net/2.0/730228/wp-content/uploads/2024/04/IMG_9350.jpeg?lossy=0&strip=1&webp=1'},
+{time:'19:25',artist:'Smalltown DJs',mix:'Bass Coast',year:2017,bg:'https://basscoast.ca/cdn/shop/articles/JoffreyPhoto.com_5_of_9.jpg?v=1499800353',photo:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReklbolMg7B7f7f2hQUEQ1HkISfGnmUl_4Pq-9hF0SAZF-GfghPnj8v49U&s=10'},
+{time:'21:00',artist:'Jack Beats',mix:'Night Bass NYE',year:2015,bg:'https://i1.sndcdn.com/artworks-000143813227-nq5avz-t500x500.jpg',photo:'https://edmidentity.com/wp-content/uploads/2016/03/Jack-Beats.jpg'},
+{time:'22:00',artist:'DJ Zinc',mix:'Crack House Mix',year:2012,bg:'https://kookooli-space-prod.fra1.cdn.digitaloceanspaces.com/blog-article/1759150060795-undergrounbd.webp',photo:'https://i1.sndcdn.com/avatars-EjVCSJ7keu6om1vf-dJlXgg-t500x500.jpg'},
+{time:'23:10',artist:'Plump DJs',mix:"Bonsai Kat 'Bla Bla Bla Bla' Mix",year:2022,bg:'https://technobeatscloud.com/_next/image?url=%2Fmedia%2Fmagazine%2Fcovers%2F1783426096027-p4qajb.jpg&w=1920&q=80',photo:'https://upload.wikimedia.org/wikipedia/commons/a/a6/Plump_DJs_-_Coachella_2009_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original'},
+{time:'23:55',artist:'Deekline & Ed Solo',mix:'Boomtown Sector 6',year:2017,bg:'https://static.wikia.nocookie.net/boomtownstoryline/images/4/43/Sector-6-boomtown.jpg/revision/latest?cb=20200217101256',photo:'https://i1.sndcdn.com/artworks-000238776168-jdxfd7-t1080x1080.jpg'}
 ];
-
-// ======================================================
-// BIT FEST — MAIN STAGE LINEUP
-// ======================================================
-
-const LINEUP = [
-  { time: "08:55:00", artist: "Sketchy Traits", title: "Dusty Decks", year: 2017 },
-  { time: "09:30:00", artist: "JPod", title: "BlissCoast 10", year: 2023 },
-  { time: "10:30:00", artist: "A.Skillz", title: "Annie Nightingale Guest Mix", year: 2009 },
-  { time: "11:00:00", artist: "Twogood", title: "Glastonbury Live Mix", year: 2017 },
-  { time: "12:00:00", artist: "Mista Trick", title: "Dubtendo", year: 2016 },
-  { time: "13:00:00", artist: "Featurecast", title: "The Main Event! Promo Mix", year: 2012 },
-  { time: "13:30:00", artist: "Spin Kringle", title: "Hello I Am Fruit Salad", year: 2023 },
-  { time: "14:30:00", artist: "DJs From Mars", title: "The History of Electronic Dance Music", year: 2017 },
-  { time: "14:35:00", artist: "CMC & Silenta", title: "Shambhala Mix", year: 2013 },
-  { time: "16:05:00", artist: "Neon Steve", title: "Fractal Forest (Shambhala)", year: 2012 },
-  { time: "17:35:00", artist: "Slynk", title: "Fractal Forest (Shambhala)", year: 2013 },
-  { time: "19:25:00", artist: "Smalltown DJs", title: "Bass Coast", year: 2017 },
-  { time: "21:00:00", artist: "Jack Beats", title: "Night Bass NYE", year: 2015 },
-  { time: "22:00:00", artist: "DJ Zinc", title: "Crack House Mix", year: 2012 },
-  { time: "23:10:00", artist: "Plump DJs", title: "Bonsai Kat 'Bla Bla Bla Bla' Mix", year: 2022 },
-  { time: "23:55:00", artist: "Deekline & Ed Solo", title: "Boomtown Sector 6", year: 2017 }
-];
-
-// ======================================================
-// FESTIVAL SETTINGS
-// ======================================================
-
-const START_SECONDS = 8*3600 + 55*60;
-const TOTAL_DURATION = PARTS.reduce((sum, p) => sum + p.duration, 0);
-
-const player = document.getElementById("player");
-const status = document.getElementById("status");
-const clock = document.getElementById("clock");
-const artist = document.getElementById("artist");
-const setTitle = document.getElementById("set-title");
-const setYear = document.getElementById("set-year");
-const setTime = document.getElementById("set-time");
-const nextArtist = document.getElementById("next-artist");
-const nextTime = document.getElementById("next-time");
-const button = document.getElementById("join-button");
-const indicator = document.getElementById("live-indicator");
-
-let joined = false;
-let currentPart = -1;
-let loadToken = 0;
-let loading = false;
-let lastRecovery = 0;
-
-// ======================================================
-// UK CLOCK
-// ======================================================
-
-function ukTime() {
-  const values = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23"
-  }).formatToParts(new Date());
-
-  const t = Object.fromEntries(
-    values.filter(x => x.type !== "literal")
-          .map(x => [x.type, Number(x.value)])
-  );
-
-  return t.hour*3600 + t.minute*60 + t.second;
-}
-
-function festivalSeconds() {
-  return (ukTime() - START_SECONDS + 86400) % 86400;
-}
-
-function findPart(elapsed) {
-  let offset = elapsed;
-
-  for (let i = 0; i < PARTS.length; i++) {
-    if (offset < PARTS[i].duration) {
-      return { index: i, offset };
-    }
-    offset -= PARTS[i].duration;
-  }
-
-  return null;
-}
-
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-
-  return [h, m, s]
-    .map(x => String(x).padStart(2, "0"))
-    .join(":");
-}
-
-// ======================================================
-// NOW PLAYING — DJ SCHEDULE
-// ======================================================
-
-const SCHEDULE = LINEUP.map(set => {
-  const [h, m, s] = set.time.split(":").map(Number);
-  const start = h*3600 + m*60 + s;
-
-  return {
-    ...set,
-    offset: (start - START_SECONDS + 86400) % 86400
-  };
-}).sort((a, b) => a.offset - b.offset);
-
-function getCurrentSet(elapsed) {
-  if (elapsed >= TOTAL_DURATION) return null;
-
-  let index = -1;
-
-  for (let i = 0; i < SCHEDULE.length; i++) {
-    if (elapsed >= SCHEDULE[i].offset) {
-      index = i;
-    } else {
-      break;
-    }
-  }
-
-  if (index < 0) return null;
-
-  return {
-    current: SCHEDULE[index],
-    next: SCHEDULE[index + 1] || null,
-    endOffset: SCHEDULE[index + 1]?.offset ?? TOTAL_DURATION
-  };
-}
-
-function updateNowPlaying(elapsed) {
-  const set = getCurrentSet(elapsed);
-
-  if (!set) {
-    artist.textContent = "Main Stage Closed";
-    setTitle.textContent = "";
-    setYear.textContent = "";
-    setTime.textContent = "Back at 08:55 UK time";
-    nextArtist.textContent = "Sketchy Traits";
-    nextTime.textContent = "08:55";
-    return;
-  }
-
-  artist.textContent = set.current.artist;
-  setTitle.textContent = set.current.title;
-  setYear.textContent = `Original mix: ${set.current.year}`;
-
-  const start = set.current.time.slice(0, 5);
-  const end = set.next
-    ? set.next.time.slice(0, 5)
-    : "00:56";
-
-  setTime.textContent = `${start} – ${end} UK time`;
-
-  if (set.next) {
-    nextArtist.textContent = set.next.artist;
-    nextTime.textContent =
-      `${set.next.time.slice(0, 5)} · ${set.next.title}`;
-  } else {
-    nextArtist.textContent = "Festival closes at 00:56";
-    nextTime.textContent = "Back tomorrow at 08:55";
-  }
-}
-
-// ======================================================
-// LIVE DISPLAY AND SYNCHRONISATION
-// ======================================================
-
-function updateDisplay() {
-  const now = ukTime();
-  clock.textContent = "🇬🇧 UK TIME: " + formatTime(now);
-
-  const elapsed = festivalSeconds();
-  const target = findPart(elapsed);
-
-  updateNowPlaying(elapsed);
-
-  if (!target) {
-    indicator.textContent = "● OFF AIR";
-    indicator.style.color = "#888";
-
-    if (joined) stopListening();
-
-    status.textContent = "🌙 Festival returns at 08:55.";
-    return;
-  }
-
-  indicator.textContent = "● LIVE NOW";
-  indicator.style.color = "#ff5555";
-
-  if (!joined) {
-    status.textContent =
-      "Press JOIN to tune into the live Main Stage.";
-    return;
-  }
-
-  if (target.index !== currentPart) {
-    loadPart(target.index);
-    return;
-  }
-
-  // Correct drift after buffering, background tabs or sleep.
-  if (!loading && player.readyState >= 1 && !player.seeking) {
-    const drift = Math.abs(player.currentTime - target.offset);
-
-    if (drift > 3) {
-      player.currentTime = target.offset;
-    }
-  }
-
-  // Recover playback if interrupted by the browser.
-  if (!loading && player.paused &&
-      Date.now() - lastRecovery > 5000) {
-    lastRecovery = Date.now();
-
-    player.play().catch(() => {
-      status.textContent =
-        "Playback paused — press JOIN to resume.";
-    });
-  }
-}
-
-function loadPart(index) {
-  const token = ++loadToken;
-  currentPart = index;
-  loading = true;
-
-  player.pause();
-  player.src = BASE_URL + PARTS[index].file;
-  player.load();
-
-  status.textContent = "⏳ Connecting to Main Stage...";
-
-  function ready() {
-    if (token !== loadToken || !joined) return;
-
-    const target = findPart(festivalSeconds());
-
-    if (!target || target.index !== index) {
-      loading = false;
-      updateDisplay();
-      return;
-    }
-
-    const safeOffset = Math.min(
-      target.offset,
-      Math.max(0, player.duration - 0.25)
-    );
-
-    player.currentTime = safeOffset;
-
-    const start = () => {
-      if (token !== loadToken || !joined) return;
-
-      loading = false;
-
-      player.play().then(() => {
-        status.textContent = "🔊 Listening LIVE";
-      }).catch(() => {
-        status.textContent =
-          "Press JOIN to start playback.";
-      });
-    };
-
-    if (player.seeking) {
-      player.addEventListener("seeked", start, { once: true });
-    } else {
-      start();
-    }
-  }
-
-  player.addEventListener("loadedmetadata", ready, { once: true });
-}
-
-function stopListening() {
-  joined = false;
-  loadToken++;
-  currentPart = -1;
-  loading = false;
-
-  player.pause();
-  player.removeAttribute("src");
-  player.load();
-
-  button.textContent = "▶ JOIN MAIN STAGE";
-}
-
-function joinOrLeave() {
-  if (joined) {
-    stopListening();
-    updateDisplay();
-    return;
-  }
-
-  const target = findPart(festivalSeconds());
-
-  if (!target) {
-    status.textContent = "Festival is currently closed.";
-    return;
-  }
-
-  joined = true;
-  button.textContent = "■ LEAVE MAIN STAGE";
-  loadPart(target.index);
-}
-
-// ======================================================
-// EVENT LISTENERS
-// ======================================================
-
-setInterval(updateDisplay, 1000);
-
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) updateDisplay();
-});
-
-window.addEventListener("focus", updateDisplay);
-window.addEventListener("pageshow", updateDisplay);
-
-player.addEventListener("ended", () => {
-  if (joined) updateDisplay();
-});
-
-player.addEventListener("error", () => {
-  if (joined) {
-    loading = false;
-    status.textContent =
-      "Audio connection interrupted. Press LEAVE, then JOIN to reconnect.";
-  }
-});
-
-button.addEventListener("click", joinOrLeave);
-
-updateDisplay();
-
+const $=id=>document.getElementById(id),player=$('player');
+const toSec=t=>{const [h,m]=t.split(':').map(Number);return h*3600+m*60};
+SETS.forEach(s=>s.offset=(toSec(s.time)-START+86400)%86400);
+let joined=false,currentSet=-1,activeBg='bgA',partIndex=-1,loadToken=0,lastSync=0;
+const fallback='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><rect width="500" height="500" fill="#281b43"/><text x="250" y="230" text-anchor="middle" font-family="Arial" font-size="65" font-weight="bold" fill="#ffe66a">BIT FEST</text><text x="250" y="280" text-anchor="middle" font-family="Arial" font-size="24" fill="#75ffe0">THE ARCHIVE IS ALIVE</text></svg>');
+$('portrait').onerror=()=>{if($('portrait').src!==fallback)$('portrait').src=fallback};
+function ukSeconds(){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=k=>Number(parts.find(p=>p.type===k).value);return get('hour')*3600+get('minute')*60+get('second')}
+function clockFmt(sec){sec=((sec%86400)+86400)%86400;return [Math.floor(sec/3600),Math.floor(sec%3600/60),sec%60].map(n=>String(n).padStart(2,'0')).join(':')}
+function elapsedNow(){return (ukSeconds()-START+86400)%86400}
+function locatePart(elapsed){let remain=elapsed;for(let i=0;i<PARTS.length;i++){if(remain<PARTS[i].duration)return {index:i,offset:remain};remain-=PARTS[i].duration}return null}
+function getSetIndex(elapsed){let index=0;for(let i=0;i<SETS.length;i++){if(elapsed>=SETS[i].offset)index=i;else break}return index}
+function setBackground(url){const next=activeBg==='bgA'?'bgB':'bgA';const node=$(next),old=$(activeBg);const preload=new Image();preload.onload=()=>{node.style.backgroundImage='url('+JSON.stringify(url)+')';node.classList.add('active');old.classList.remove('active');activeBg=next};preload.onerror=()=>{node.style.backgroundImage='radial-gradient(circle at 60% 30%,#66266e,#100b1c 80%)';node.classList.add('active');old.classList.remove('active');activeBg=next};preload.src=url}
+function renderLineup(index,offAir){$('lineup').replaceChildren(...SETS.map((s,i)=>{const row=document.createElement('div');row.className='slot'+(!offAir&&i===index?' current':'');const time=document.createElement('div');time.className='time';time.textContent=s.time;const details=document.createElement('div');const who=document.createElement('div');who.className='who';who.textContent=s.artist;const title=document.createElement('div');title.className='title';title.textContent=s.mix;details.append(who,title);const year=document.createElement('div');year.className='yr';year.textContent=s.year;const badge=document.createElement('div');badge.className='badge';badge.textContent=!offAir&&i===index?'● LIVE':'';year.append(badge);row.append(time,details,year);return row}))}
+function displaySet(elapsed){const offAir=elapsed>=TOTAL;const index=offAir?-1:getSetIndex(elapsed);if(index===currentSet)return;currentSet=index;renderLineup(index,offAir);if(offAir){$('year').textContent='----';$('artist').textContent='OFF AIR';$('mix').textContent='The archive opens again at 08:55 UK time.';$('settime').textContent='TRANSMISSION COMPLETE';$('eyebrow').textContent='◉ MAIN STAGE / OFF AIR';$('broadcastLabel').textContent='MAIN STAGE / OFF AIR';$('liveDot').style.background='#999';$('portrait').src=fallback;$('portraitCaption').textContent='END OF TRANSMISSION';return}const s=SETS[index];$('year').textContent=s.year;$('artist').textContent=s.artist;$('mix').textContent=s.mix;$('settime').textContent=s.time+' — '+(index+1<SETS.length?SETS[index+1].time:clockFmt(START+TOTAL))+' UK';$('eyebrow').textContent='◉ NOW TRANSMITTING / MAIN STAGE';$('broadcastLabel').textContent='MAIN STAGE / LIVE FROM '+s.year;$('liveDot').style.background='#ff3d63';$('portrait').src=s.photo;$('portrait').alt='Artwork or photograph for '+s.artist;$('portraitCaption').textContent='ARCHIVE FILE / '+s.year;setBackground(s.bg)}
+function updateNext(elapsed){if(elapsed>=TOTAL){$('nextName').textContent='TOMORROW: SKETCHY TRAITS';$('nextInfo').textContent='08:55 UK TIME';$('countdown').textContent='BACK IN '+clockFmt(86400-elapsed);return}const i=getSetIndex(elapsed);if(i+1<SETS.length){const s=SETS[i+1];$('nextName').textContent=s.artist;$('nextInfo').textContent=s.time+' UK · '+s.year;$('countdown').textContent='IN '+clockFmt(s.offset-elapsed)}else{$('nextName').textContent='END OF BROADCAST';$('nextInfo').textContent='00:56:44 UK';$('countdown').textContent='IN '+clockFmt(TOTAL-elapsed)}}
+function status(msg){$('status').textContent=msg}
+function stop(){joined=false;loadToken++;player.pause();player.removeAttribute('src');player.load();partIndex=-1;$('joinBtn').textContent='▶ TUNE INTO MAIN STAGE';status('Disconnected. The festival keeps going.')}
+function loadPart(index){const token=++loadToken;partIndex=index;player.pause();player.src=AUDIO_ROOT+PARTS[index].file;player.load();status('Connecting to the archive…');const seekAndPlay=()=>{if(token!==loadToken||!joined)return;const part=locatePart(elapsedNow());if(!part||part.index!==index){tick();return}try{player.currentTime=Math.max(0,Math.min(part.offset,Math.max(0,(player.duration||PARTS[index].duration)-.1)))}catch(e){status('Audio is loading…');return}const play=()=>{if(token!==loadToken||!joined)return;player.play().then(()=>status('● CONNECTION ESTABLISHED · YOU ARE LISTENING TO '+SETS[getSetIndex(elapsedNow())].year)).catch(()=>status('Tap TUNE IN again if your browser blocked playback.'))};if(player.seeking)player.addEventListener('seeked',play,{once:true});else play()};if(player.readyState>=1)seekAndPlay();else player.addEventListener('loadedmetadata',seekAndPlay,{once:true})}
+function tick(){const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Back tomorrow at 08:55 UK time.');return}if(!joined)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused)player.play().catch(()=>status('Playback paused by your browser — tap TUNE IN again.'))}}
+$('joinBtn').addEventListener('click',()=>{if(joined){if(player.paused){player.play().catch(()=>status('Playback blocked. Try tapping again.'))}else stop();return}const part=locatePart(elapsedNow());if(!part)return;joined=true;$('joinBtn').textContent='■ DISCONNECT';loadPart(part.index)});
+player.addEventListener('ended',()=>{if(joined)tick()});player.addEventListener('error',()=>{if(joined)status('Audio could not load. Check your connection and try tuning in again.')});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);window.addEventListener('pageshow',tick);tick();setInterval(tick,1000);
 </script>
-
-</body>
-</html>
+</body></html>

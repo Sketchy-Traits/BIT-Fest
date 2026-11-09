@@ -15,6 +15,30 @@ body.tent-departing #tentTransition{opacity:1;pointer-events:auto}
 body.tent-arriving #tentTransition{opacity:1;transition:none}
 @media(prefers-reduced-motion:reduce){#tentTransition{transition:none}}
 </style>
+<style id="other-tent-acid-palette">
+/* The Other Tent: acid yellow and rave green, with a dark photographic vignette. */
+.other-tent{--pink:#b8ff28;--mint:#80ff75;--yellow:#ffe84a;--ink:#080f09;--white:#f7ffe7}
+.other-tent .shade{background:radial-gradient(ellipse at center,rgba(0,0,0,.06) 12%,rgba(0,0,0,.42) 59%,rgba(0,0,0,.93) 100%),linear-gradient(90deg,rgba(4,15,7,.78),rgba(4,14,7,.28) 64%,rgba(4,14,7,.45))}
+.other-tent .backdrops{background:#09170b}
+.other-tent .brand{text-shadow:5px 5px 0 #346e12,9px 9px 0 #152f0e}
+.other-tent .hero{border-color:#b8ff2888;background:linear-gradient(130deg,#0c220fc9,#14270cb3);box-shadow:0 20px 65px #0009,0 0 35px #a8ff2929}
+.other-tent .hero:before{background:radial-gradient(circle at 80% 20%,#a6ff2b24,transparent 42%),linear-gradient(135deg,#ffe84a10,transparent 55%)}
+.other-tent .year{text-shadow:5px 5px 0 #327a18,10px 10px 30px #000a}
+.other-tent .mix{color:#e0f5c9}
+.other-tent .clock,.other-tent .panel,.other-tent .slot{background:#08190fe6}
+.other-tent .slot.current{background:#24431bee;border-color:var(--mint)}
+.other-tent .portrait-frame{background:linear-gradient(145deg,#ffe84a,#80ff75)}
+.other-tent .portrait{background:#1a341c}
+.other-tent .portrait-caption{background:#0a1b0b}
+.other-tent .stage-link{background:#0c220de6;border-color:#b8ff2880;color:#f7ffe7}
+.other-tent .stage-link:hover,.other-tent .stage-link:focus-visible{background:#30551b}
+.other-tent .other-link.active{background:#ffe84a;border-color:#ffe84a;color:#12200b}
+.other-tent .cta{color:#11210c}
+.other-tent .chip,.other-tent .message{background:#18351bdc;border-color:#80ff7560}
+.other-tent .social-form input,.other-tent .named-join input{background:#0b220e}
+.other-tent .named-join button{background:#1a421e}
+.other-tent .social-hint,.other-tent .archive-note,.other-tent .lineup-sub,.other-tent .footer{color:#d5e9c7}
+</style>
 </head>
 <body class="other-tent"><div id="tentTransition" aria-hidden="true"></div>
 <div class="backdrops" aria-hidden="true"><div class="backdrop active" id="bgA"></div><div class="backdrop" id="bgB"></div></div><div class="shade" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>

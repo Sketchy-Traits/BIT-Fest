@@ -1,0 +1,27 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      ".read": "auth != null",
+      "$uid": {
+        "$session": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['nickname', 'listening', 'updatedAt']) && newData.child('nickname').isString() && newData.child('nickname').val().length <= 24 && newData.child('listening').isBoolean() && newData.child('updatedAt').isNumber()"
+        }
+      }
+    },
+    "comments": {
+      "$setIndex": {
+        ".read": "auth != null && $setIndex.matches(/^(?:[0-9]|1[0-5]|other-(?:[0-9]|1[0-9]))$/)",
+        ".indexOn": [
+          "createdAt"
+        ],
+        "$messageId": {
+          ".write": "auth != null && $setIndex.matches(/^(?:[0-9]|1[0-5]|other-(?:[0-9]|1[0-9]))$/) && ((!data.exists() && newData.exists()) || (data.exists() && !newData.exists() && data.child('uid').val() === auth.uid))",
+          ".validate": "newData.hasChildren(['nickname', 'text', 'createdAt', 'uid', 'dj']) && newData.child('uid').val() === auth.uid && newData.child('nickname').isString() && newData.child('nickname').val().length > 0 && newData.child('nickname').val().length <= 24 && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 500 && newData.child('dj').isString() && newData.child('dj').val().length <= 100 && newData.child('createdAt').isNumber()"
+        }
+      }
+    }
+  }
+}

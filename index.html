@@ -8,11 +8,19 @@
 .social{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:24px}.social .panel:last-child{grid-column:auto}.listen-count{font-size:clamp(1.6rem,3vw,2.5rem);font-weight:900;color:var(--mint)}.social-hint{font-size:.85rem;color:#cfc6df;line-height:1.5}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{border:1px solid #75ffe077;border-radius:99px;padding:7px 12px;background:#27153b;font-size:.85rem}.feed{min-height:120px;max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;margin-bottom:14px}.message{padding:10px 12px;border:1px solid #ffffff2d;background:#241633b5;border-radius:10px;overflow-wrap:anywhere}.message-meta{font-size:.76rem;color:var(--mint);margin-bottom:5px}.social-form{display:flex;gap:8px;flex-wrap:wrap}.social-form input{background:#160f27;border:1px solid #ffffff77;color:white;padding:12px;border-radius:8px;font:inherit;min-width:0;flex:1 1 140px;font-size:16px}.social-form button{border:0;background:var(--yellow);color:#150c25;border-radius:8px;font-weight:900;padding:12px 18px;min-height:44px}.social-form button:disabled{opacity:.5}.social-form input:focus-visible{outline:2px solid var(--mint)}@media(max-width:780px){.social{grid-template-columns:1fr}.social .panel:last-child{grid-column:auto}}
 .named-join{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;max-width:440px}.named-join input{flex:1 1 185px;min-width:0;border:1px solid #75ffe099;background:#130c26;color:#fff;padding:12px;border-radius:9px;font-size:16px}.named-join button{flex:1 1 170px;min-height:46px;border:1px solid var(--mint);border-radius:9px;background:#163c40;color:var(--mint);font-weight:900}.named-join button:disabled{opacity:.5}.named-join input:focus-visible{outline:2px solid var(--yellow)}
 .delete-comment{display:block;margin-top:9px;background:transparent;border:1px solid #ff8ea7;color:#ffb4c6;border-radius:7px;padding:7px 10px;font:700 .7rem monospace;min-height:36px}.delete-comment:hover{background:#67223b}.delete-comment:disabled{opacity:.5}</style>
+<style>.stage-nav{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 10px}.stage-link{display:inline-block;text-decoration:none;color:#fff8f1;border:2px solid #75ffe099;border-radius:12px;background:#150b2dcf;padding:14px 20px;font-weight:900;letter-spacing:.09em}.stage-link:hover,.stage-link:focus-visible{background:#542d68}.main-link.active,.other-link.active{color:#100b1c;background:#ffe66a;border-color:#ffe66a}.other-tent .hero{border-color:#ff5bd5}.other-tent .hero:after{content:'✷  UNDERGROUND FREQUENCY  ✷'}.other-tent .shade{background:linear-gradient(90deg,#16091de8,#1d0a26a8 55%,#19071dd9),linear-gradient(0deg,#16091de8,transparent 60%)}.other-tent .brand{text-shadow:5px 5px 0 #9b307e,9px 9px 0 #5e1c40}.other-tent .portrait-frame{transform:rotate(-3deg)}@media(max-width:430px){.stage-link{flex:1;text-align:center;padding:12px 8px;font-size:.82rem}}</style><style>
+/* Tent-to-tent transition: darken the old tent, reveal the new one. */
+#tentTransition{position:fixed;inset:0;z-index:99999;pointer-events:none;background:#10071c;opacity:0;transition:opacity 850ms ease}
+body.tent-departing #tentTransition{opacity:1;pointer-events:auto}
+body.tent-arriving #tentTransition{opacity:1;transition:none}
+@media(prefers-reduced-motion:reduce){#tentTransition{transition:none}}
+</style>
 </head>
-<body>
+<body><div id="tentTransition" aria-hidden="true"></div>
 <div class="backdrops" aria-hidden="true"><div class="backdrop active" id="bgA"></div><div class="backdrop" id="bgB"></div></div><div class="shade" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>
 <main class="shell"><header class="topbar"><div><div class="brand">BIT <span>FEST</span></div><p class="tagline">BACK IN TIME FESTIVAL · THE ARCHIVE IS ALIVE</p></div><div class="clock">UK TRANSMISSION TIME<strong id="clock">--:--:--</strong></div></header>
 <div class="ticker"><span class="dot" id="liveDot"></span><span id="broadcastLabel">MAIN STAGE / CONNECTING TO ARCHIVE</span><span class="muted">◈ EST. IN THE PAST · LIVE IN THE PRESENT</span></div>
+<nav class="stage-nav" aria-label="Festival stages"><a class="stage-link main-link active" aria-current="page" href="index.html">✦ MAIN STAGE</a><a class="stage-link other-link" href="other-tent.html">✷ THE OTHER TENT</a></nav>
 <section class="hero" aria-label="Main Stage"><div class="hero-content"><div><div class="eyebrow" id="eyebrow">◉ NOW TRANSMITTING / MAIN STAGE</div><div class="year" id="year">----</div><h1 class="artist" id="artist">BIT FEST</h1><div class="mix" id="mix">Finding the current transmission…</div><div class="settime" id="settime">UK TIME</div><button class="cta" id="joinBtn" type="button">▶ TUNE INTO MAIN STAGE</button><div class="named-join"><input id="joinNick" maxlength="24" placeholder="Your festival name (optional)" aria-label="Festival name"><button id="joinNamedBtn" type="button">🎟 JOIN WITH NAME</button></div><div class="status" id="status" role="status" aria-live="polite">Audio starts when you tune in.</div></div><div class="portrait-frame"><img class="portrait" id="portrait" alt="Current DJ artwork" referrerpolicy="no-referrer"><div class="portrait-caption" id="portraitCaption">ARCHIVE FILE / MAIN STAGE</div></div></div></section>
 <section class="lower"><div class="panel"><h2>↗ UP NEXT</h2><div class="next-name" id="nextName">Loading…</div><div class="next-info" id="nextInfo">UK TIME</div><div class="countdown" id="countdown">--:--:--</div></div></section>
 <section class="social" aria-label="Festival community">
@@ -75,7 +83,7 @@ player.addEventListener('play',()=>{
     if(live.index!==partIndex){loadPart(live.index);return}
     try{player.currentTime=live.offset}catch(e){}
   }
-  $('joinBtn').textContent='🌳 DIP OUT THE TENT FOR A MOMENT';
+  $('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';
 });
 // Explicitly handle lock-screen / notification controls where supported.
 if('mediaSession' in navigator){
@@ -97,21 +105,51 @@ function renderLineup(index,offAir){$('lineup').replaceChildren(...SETS.map((s,i
 function displaySet(elapsed){const offAir=elapsed>=TOTAL;const index=offAir?-1:getSetIndex(elapsed);if(index===currentSet)return;currentSet=index;renderLineup(index,offAir);if(offAir){$('year').textContent='----';$('artist').textContent='OFF AIR';$('mix').textContent='The music starts again at 09:00 UK time.';$('settime').textContent='TRANSMISSION COMPLETE';$('eyebrow').textContent='◉ MAIN STAGE / OFF AIR';$('broadcastLabel').textContent='MAIN STAGE / OFF AIR';$('liveDot').style.background='#999';$('portrait').src=fallback;$('portraitCaption').textContent='END OF TRANSMISSION';return}const s=SETS[index];$('year').textContent=s.year;$('artist').textContent=s.artist;$('mix').textContent=s.mix;$('settime').textContent=(index===0?'09:00':s.time)+' — '+(index+1<SETS.length?SETS[index+1].time:clockFmt(START+TOTAL))+' UK';$('eyebrow').textContent='◉ NOW TRANSMITTING / MAIN STAGE';$('broadcastLabel').textContent='MAIN STAGE / LIVE FROM '+s.year;$('liveDot').style.background='#ff3d63';$('portrait').src=s.photo;$('portrait').alt='Artwork or photograph for '+s.artist;$('portraitCaption').textContent='ARCHIVE FILE / '+s.year;setBackground(s.bg);window.dispatchEvent(new CustomEvent('bitfest-set-change',{detail:{index}}))}
 function updateNext(elapsed){if(elapsed>=TOTAL){$('nextName').textContent='TOMORROW: SKETCHY TRAITS';$('nextInfo').textContent='09:00 UK TIME';$('countdown').textContent='BACK IN '+clockFmt(86400-elapsed);return}const i=getSetIndex(elapsed);if(i+1<SETS.length){const s=SETS[i+1];$('nextName').textContent=s.artist;$('nextInfo').textContent=s.time+' UK · '+s.year;$('countdown').textContent='IN '+clockFmt(s.offset-elapsed)}else{$('nextName').textContent='END OF BROADCAST';$('nextInfo').textContent='00:56:44 UK';$('countdown').textContent='IN '+clockFmt(TOTAL-elapsed)}}
 function status(msg){$('status').textContent=msg}
-function stop(){joined=false;window.dispatchEvent(new Event('bitfest-listening-change'));loadToken++;pauseInternally();userPaused=false;player.removeAttribute('src');player.load();partIndex=-1;$('joinBtn').textContent='▶ TUNE INTO MAIN STAGE';status('Disconnected. The festival keeps going.')}
+function stop(){joined=false;window.dispatchEvent(new Event('bitfest-listening-change'));loadToken++;pauseInternally();userPaused=false;player.removeAttribute('src');player.load();partIndex=-1;$('joinBtn').textContent='🔊 BACK INTO THE TENT';status('Disconnected. The festival keeps going.')}
 function resumeLive(){
   const live=locatePart(elapsedNow());
   if(!live)return;
   if(!joined){joined=true;window.dispatchEvent(new Event('bitfest-listening-change'))}
   userPaused=false;window.dispatchEvent(new Event('bitfest-listening-change'));
-  $('joinBtn').textContent='🌳 DIP OUT THE TENT FOR A MOMENT';
+  $('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';
   if(partIndex!==live.index){loadPart(live.index);return}
   try{player.currentTime=live.offset}catch(e){}
   player.play().catch(()=>status('Tap RESUME on the website to rejoin live.'));
 }
 function loadPart(index){const token=++loadToken;partIndex=index;pauseInternally();player.src=AUDIO_ROOT+PARTS[index].file;player.load();status('Connecting to the archive…');const seekAndPlay=()=>{if(token!==loadToken||!joined)return;const part=locatePart(elapsedNow());if(!part||part.index!==index){tick();return}try{player.currentTime=Math.max(0,Math.min(part.offset,Math.max(0,(player.duration||PARTS[index].duration)-.1)))}catch(e){status('Audio is loading…');return}const play=()=>{if(token!==loadToken||!joined||userPaused)return;player.play().then(()=>status('● CONNECTION ESTABLISHED · YOU ARE LISTENING TO '+SETS[getSetIndex(elapsedNow())].year)).catch(()=>status('Tap TUNE IN again if your browser blocked playback.'))};if(player.seeking)player.addEventListener('seeked',play,{once:true});else play()};if(player.readyState>=1)seekAndPlay();else player.addEventListener('loadedmetadata',seekAndPlay,{once:true})}
 function tick(){const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;$('joinNamedBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Music starts tomorrow at 09:00 UK time.');return}if(!joined||userPaused)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused){userPaused=true;$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin the live broadcast.')}}}
-$('joinNamedBtn').addEventListener('click',()=>{const nick=$('joinNick').value.trim().replace(/\s+/g,' ').slice(0,24);if(!nick){$('joinNick').focus();status('Enter a festival name, or use TUNE INTO MAIN STAGE to join anonymously.');return}localStorage.setItem('bitfest-nickname',nick);$('commentNick').value=nick;window.dispatchEvent(new Event('bitfest-listening-change'));if(!joined){$('joinBtn').click()}else if(userPaused){resumeLive()}else{status('● YOU ARE TUNED IN AS '+nick)}window.dispatchEvent(new Event('bitfest-listening-change'))});$('joinBtn').addEventListener('click',()=>{if(joined){if(player.paused){resumeLive()}else stop();return}const part=locatePart(elapsedNow());if(!part)return;joined=true;window.dispatchEvent(new Event('bitfest-listening-change'));$('joinBtn').textContent='🌳 DIP OUT THE TENT FOR A MOMENT';loadPart(part.index)});
+$('joinNamedBtn').addEventListener('click',()=>{const nick=$('joinNick').value.trim().replace(/\s+/g,' ').slice(0,24);if(!nick){$('joinNick').focus();status('Enter a festival name, or use TUNE INTO MAIN STAGE to join anonymously.');return}localStorage.setItem('bitfest-nickname',nick);$('commentNick').value=nick;window.dispatchEvent(new Event('bitfest-listening-change'));if(!joined){$('joinBtn').click()}else if(userPaused){resumeLive()}else{status('● YOU ARE TUNED IN AS '+nick)}window.dispatchEvent(new Event('bitfest-listening-change'))});$('joinBtn').addEventListener('click',()=>{if(joined){if(player.paused){resumeLive()}else stop();return}const part=locatePart(elapsedNow());if(!part)return;joined=true;window.dispatchEvent(new Event('bitfest-listening-change'));$('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';loadPart(part.index)});
 player.addEventListener('ended',()=>{if(joined)tick()});player.addEventListener('error',()=>{if(joined)status('Audio could not load. Check your connection and try tuning in again.')});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);window.addEventListener('pageshow',tick);tick();setInterval(tick,1000);
+// Preserve a user's initial audio opt-in when walking between tents.
+// Browser autoplay policies can still require a tap after a full-page navigation.
+const tentLinks=document.querySelectorAll('.stage-nav a[href]');
+for(const link of tentLinks){
+  if(link.getAttribute('aria-current')==='page')continue;
+  link.addEventListener('click',event=>{
+    if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
+    event.preventDefault();
+    const wasListening=joined&&!userPaused&&!player.paused;
+    sessionStorage.setItem('bitfest-tent-switch',JSON.stringify({autojoin:wasListening,at:Date.now()}));
+    document.body.classList.add('tent-departing');
+    // Stop this tent immediately: never allow two audio streams.
+    pauseInternally();
+    setTimeout(()=>{window.location.href=link.href},850);
+  });
+}
+let tentArrival=null;
+try{tentArrival=JSON.parse(sessionStorage.getItem('bitfest-tent-switch')||'null')}catch(e){}
+sessionStorage.removeItem('bitfest-tent-switch');
+if(tentArrival&&Date.now()-tentArrival.at<15000){
+  document.body.classList.add('tent-arriving');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('tent-arriving')));
+  if(tentArrival.autojoin){
+    // This uses the existing live-position seek logic, rather than starting at 0.
+    setTimeout(()=>{
+      if(!joined&&!$('joinBtn').disabled)$('joinBtn').click();
+    },120);
+  }
+}
+
 </script>
 <script type="module">
 // Fill in these six values from Firebase Console → Project settings → Your apps → Web app.
@@ -139,12 +177,12 @@ let activePresence=false;
 const getNick=()=>byId('commentNick').value.trim()||'';
 const cleanNick=v=>v.trim().slice(0,24);
 // The original page uses top-level `let joined`, so we expose it via a safe accessor below.
-function updatePresence(){if(!activePresence)return;set(sessionRef,{nickname:localStorage.getItem('bitfest-nickname')||'',listening:window.bitfestIsListening(),updatedAt:serverTimestamp()}).catch(()=>{})}
+function updatePresence(){if(!activePresence)return;set(sessionRef,{nickname:localStorage.getItem('bitfest-nickname')||'',listening:window.bitfestIsListening(),updatedAt:serverTimestamp(),stage:'main'}).catch(()=>{})}
 onValue(connectedRef,async snap=>{activePresence=!!snap.val();if(!activePresence)return;try{await onDisconnect(sessionRef).remove();updatePresence()}catch(e){setText('presenceStatus','Unable to register listener presence.')}});
 window.addEventListener('bitfest-listening-change',updatePresence);
 window.addEventListener('pagehide',()=>{set(sessionRef,null).catch(()=>{})});
 onValue(ref(db,'presence'),snap=>{
-const sessions=[];snap.forEach(user=>user.forEach(entry=>{const v=entry.val();if(v&&v.listening)sessions.push({uid:user.key,nickname:v.nickname||''})}));
+const sessions=[];snap.forEach(user=>user.forEach(entry=>{const v=entry.val();if(v&&v.listening&&(!v.stage||v.stage==='main'))sessions.push({uid:user.key,nickname:v.nickname||''})}));
 const unique=new Map();sessions.forEach(x=>{if(!unique.has(x.uid))unique.set(x.uid,x.nickname)});
 setText('listenCount',unique.size+' listening live');setText('presenceStatus','● Live listener count');
 const names=[...unique.values()].filter(Boolean);const box=byId('listenerNames');box.replaceChildren();names.slice(0,30).forEach(name=>{const span=document.createElement('span');span.className='chip';span.textContent='🎧 '+name;box.append(span)});

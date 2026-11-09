@@ -25,6 +25,38 @@ body.tent-arriving #tentTransition{opacity:1;transition:none}
 .festival-byline span{opacity:.65;margin:0 .4em}
 @media(max-width:520px){.brand.stage-title{font-size:clamp(2.7rem,12vw,4.3rem)}}
 </style>
+<style id="stage-identities-v5-5">
+/* v5.5: consistent stage identities on both pages */
+.stage-nav .main-link,
+.other-tent .stage-nav .main-link {
+  font-family:'Barlow Condensed',Impact,sans-serif;
+  font-size:1.22rem;font-weight:900;letter-spacing:.035em;
+  color:#e7f7ff;background:#102944e8;border:2px solid #42baff;
+  text-shadow:1px 1px 0 #a92b42;
+}
+.stage-nav .main-link:hover,.stage-nav .main-link:focus-visible,
+.other-tent .stage-nav .main-link:hover,.other-tent .stage-nav .main-link:focus-visible {background:#1d4d78}
+.stage-nav .other-link,
+.other-tent .stage-nav .other-link {
+  font-family:'Bungee',Impact,sans-serif;
+  font-size:.95rem;font-weight:400;letter-spacing:0;
+  color:#f6ef4a;background:#14280de8;border:2px solid #b8ff28;
+  text-shadow:2px 2px 0 #225b1a;
+}
+.stage-nav .other-link:hover,.stage-nav .other-link:focus-visible,
+.other-tent .stage-nav .other-link:hover,.other-tent .stage-nav .other-link:focus-visible {background:#33511a}
+.stage-nav .stage-link.active,.other-tent .stage-nav .stage-link.active {box-shadow:0 0 0 2px #ffffff40,0 0 18px currentColor}
+@media(max-width:430px){.stage-nav .main-link,.other-tent .stage-nav .main-link{font-size:1.08rem}.stage-nav .other-link,.other-tent .stage-nav .other-link{font-size:.75rem}}
+
+/* Main Stage: black edges with electric blue and red colour bloom */
+body:not(.other-tent) .shade{
+ background:
+ radial-gradient(ellipse at center,transparent 15%,rgba(0,0,0,.30) 50%,rgba(0,0,0,.93) 100%),
+ radial-gradient(ellipse at 3% 40%,rgba(15,103,216,.43),transparent 57%),
+ radial-gradient(ellipse at 98% 67%,rgba(216,24,55,.42),transparent 56%),
+ linear-gradient(90deg,rgba(0,0,0,.50),transparent 45%,rgba(0,0,0,.48));
+}
+</style>
 </head>
 <body><div id="tentTransition" aria-hidden="true"></div>
 <div class="backdrops" aria-hidden="true"><div class="backdrop active" id="bgA"></div><div class="backdrop" id="bgB"></div></div><div class="shade" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>

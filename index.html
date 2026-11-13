@@ -63,7 +63,7 @@ body:not(.other-tent) .shade{
 <div class="backdrops" aria-hidden="true"><div class="backdrop active" id="bgA"></div><div class="backdrop" id="bgB"></div></div><div class="shade" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>
 <main class="shell"><header class="topbar"><div><div class="brand stage-title">MAIN STAGE</div><p class="tagline festival-byline">✦ YESTERYEAR <span aria-hidden="true">/</span> WE’RE STILL HERE</p></div><div class="clock">UK TRANSMISSION TIME<strong id="clock">--:--:--</strong></div></header>
 <div class="ticker"><span class="dot" id="liveDot"></span><span id="broadcastLabel">MAIN STAGE / CONNECTING TO ARCHIVE</span><span class="muted">◈ EST. IN THE PAST · LIVE IN THE PRESENT</span></div>
-<nav class="stage-nav" aria-label="Festival stages"><a class="stage-link main-link active" aria-current="page" href="index.html">✦ MAIN STAGE</a><a class="stage-link other-link" href="other-tent.html">✷ THE OTHER TENT</a></nav>
+<nav class="stage-nav" aria-label="Festival stages"><a class="stage-link main-link active" aria-current="page" href="index.html">✦ MAIN STAGE</a><a class="stage-link other-link" href="other-tent.html">✷ YESTERSTAGE</a></nav>
 <section class="hero" aria-label="Main Stage"><div class="hero-content"><div><div class="eyebrow" id="eyebrow">◉ NOW TRANSMITTING / MAIN STAGE</div><div class="year" id="year">----</div><h1 class="artist" id="artist">YESTERYEAR</h1><div class="mix" id="mix">Finding the current transmission…</div><div class="settime" id="settime">UK TIME</div><button class="cta" id="joinBtn" type="button">▶ TUNE INTO MAIN STAGE</button><div class="named-join"><input id="joinNick" maxlength="24" placeholder="Your festival name (optional)" aria-label="Festival name"><button id="joinNamedBtn" type="button">🎟 JOIN WITH NAME</button></div><div class="status" id="status" role="status" aria-live="polite">Audio starts when you tune in.</div></div><div class="portrait-frame"><img class="portrait" id="portrait" alt="Current DJ artwork" referrerpolicy="no-referrer"><div class="portrait-caption" id="portraitCaption">ARCHIVE FILE / MAIN STAGE</div></div></div></section>
 <section class="lower"><div class="panel"><h2>↗ UP NEXT</h2><div class="next-name" id="nextName">Loading…</div><div class="next-info" id="nextInfo">UK TIME</div><div class="countdown" id="countdown">--:--:--</div></div></section>
 <section class="social" aria-label="Festival community">
@@ -104,7 +104,8 @@ SETS.forEach(s=>s.offset=(toSec(s.time)-START+86400)%86400);
 let joined=false,currentSet=-2,activeBg='bgA',partIndex=-1,loadToken=0,lastSync=0;
 let userPaused=false,internalPause=false,internalPauseUntil=0, pending=false;
 window.bitfestIsListening=()=>joined&&!userPaused&&!player.paused;
-window.bitfestCurrentSet=()=>currentSet;
+window.bitfestCurrentSet=()=>elapsedNow()>=TOTAL?-1:getSetIndex(elapsedNow());
+window.ysFestivalTime=()=>({elapsed:elapsedNow(),start:START,total:TOTAL,count:SETS.length});
 window.bitfestSetName=i=>SETS[i]?.artist||'Unknown';
 player.addEventListener('playing',()=>window.dispatchEvent(new Event('bitfest-listening-change')));
 player.addEventListener('pause',()=>window.dispatchEvent(new Event('bitfest-listening-change')));
@@ -126,7 +127,7 @@ player.addEventListener('play',()=>{
     if(live.index!==partIndex){loadPart(live.index);return}
     try{player.currentTime=live.offset}catch(e){}
   }
-  $('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';
+  $('joinBtn').textContent='LEAVE STAGE';
 });
 // Explicitly handle lock-screen / notification controls where supported.
 if('mediaSession' in navigator){
@@ -148,7 +149,7 @@ function renderLineup(index,offAir){$('lineup').replaceChildren(...SETS.map((s,i
 function displaySet(elapsed){const offAir=elapsed>=TOTAL;const index=offAir?-1:getSetIndex(elapsed);if(index===currentSet)return;currentSet=index;renderLineup(index,offAir);if(offAir){$('year').textContent='----';$('artist').textContent='OFF AIR';$('mix').textContent='The music starts again at 09:00 UK time.';$('settime').textContent='TRANSMISSION COMPLETE';$('eyebrow').textContent='◉ MAIN STAGE / OFF AIR';$('broadcastLabel').textContent='MAIN STAGE / OFF AIR';$('liveDot').style.background='#999';$('portrait').src=fallback;$('portraitCaption').textContent='END OF TRANSMISSION';return}const s=SETS[index];$('year').textContent=s.year;$('artist').textContent=s.artist;$('mix').textContent=s.mix;$('settime').textContent=(index===0?'09:00':s.time)+' — '+(index+1<SETS.length?SETS[index+1].time:clockFmt(START+TOTAL))+' UK';$('eyebrow').textContent='◉ NOW TRANSMITTING / MAIN STAGE';$('broadcastLabel').textContent='MAIN STAGE / LIVE FROM '+s.year;$('liveDot').style.background='#ff3d63';$('portrait').src=s.photo;$('portrait').alt='Artwork or photograph for '+s.artist;$('portraitCaption').textContent='ARCHIVE FILE / '+s.year;setBackground(s.bg);window.dispatchEvent(new CustomEvent('bitfest-set-change',{detail:{index}}))}
 function updateNext(elapsed){if(elapsed>=TOTAL){$('nextName').textContent='TOMORROW: SKETCHY TRAITS';$('nextInfo').textContent='09:00 UK TIME';$('countdown').textContent='BACK IN '+clockFmt(86400-elapsed);return}const i=getSetIndex(elapsed);if(i+1<SETS.length){const s=SETS[i+1];$('nextName').textContent=s.artist;$('nextInfo').textContent=s.time+' UK · '+s.year;$('countdown').textContent='IN '+clockFmt(s.offset-elapsed)}else{$('nextName').textContent='END OF BROADCAST';$('nextInfo').textContent='00:56:44 UK';$('countdown').textContent='IN '+clockFmt(TOTAL-elapsed)}}
 function status(msg){$('status').textContent=msg}
-function stop(){joined=false;pending=false;loadToken++;userPaused=true;pauseInternally();$('joinBtn').textContent='🔊 BACK INTO THE TENT';status('Muted. The festival keeps going.');window.dispatchEvent(new Event('bitfest-listening-change'));}
+function stop(){joined=false;pending=false;loadToken++;userPaused=true;pauseInternally();$('joinBtn').textContent='▶ ENTER STAGE';status('You have left the stage. The festival keeps going.');window.dispatchEvent(new Event('bitfest-listening-change'));}
 function playbackFailed(token,error){if(token!==loadToken)return;pending=false;userPaused=true;pauseInternally();$('joinBtn').textContent='▶ RESUME LIVE';status(error?.name==='NotAllowedError'?'Browser blocked autoplay. Tap RESUME LIVE to tune in.':'Could not start audio. Tap RESUME LIVE to retry.');window.dispatchEvent(new Event('bitfest-listening-change'));}
 function resumeLive(){const live=locatePart(elapsedNow());if(!live)return;joined=true;userPaused=false;loadPart(live.index);}
 function loadPart(index){
@@ -161,7 +162,7 @@ function loadPart(index){
  if(player.readyState>=1)seekLive();else player.addEventListener('loadedmetadata',seekLive,{once:true});
  // Call play directly in the click handler, not after metadata/seek events.
  let attempt;try{attempt=player.play();}catch(e){playbackFailed(token,e);return;}
- Promise.resolve(attempt).then(()=>{if(token!==loadToken||!joined)return;pending=false;userPaused=false;$('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';status('● CONNECTION ESTABLISHED · YOU ARE LISTENING LIVE');window.dispatchEvent(new Event('bitfest-listening-change'));}).catch(e=>playbackFailed(token,e));
+ Promise.resolve(attempt).then(()=>{if(token!==loadToken||!joined)return;pending=false;userPaused=false;$('joinBtn').textContent='LEAVE STAGE';status('● CONNECTION ESTABLISHED · YOU ARE LISTENING LIVE');window.dispatchEvent(new Event('bitfest-listening-change'));}).catch(e=>playbackFailed(token,e));
  setTimeout(()=>{if(token===loadToken&&pending)playbackFailed(token,new Error('Connection timeout'));},20000);
 }
 function tick(){if(document.body.classList.contains("tent-departing"))return;const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;$('joinNamedBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Music starts tomorrow at 09:00 UK time.');return}if(!joined||userPaused||pending)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused){userPaused=true;$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin the live broadcast.')}}}
@@ -245,7 +246,7 @@ function renderFeed(id,snapshot,setIndex){
  entries.forEach(msg=>{
   const item=document.createElement('div');item.className='message';
   const meta=document.createElement('div');meta.className='message-meta';
-  const time=typeof msg.createdAt==='number'?new Date(msg.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short',timeZone:'Europe/London'}):'Just now';
+  const time=typeof msg.createdAt==='number'?new Date(msg.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/London'}):'Just now';
   meta.textContent=time+' · '+(msg.dj||window.bitfestSetName(Number(msg.bucket.replace('other-','')))||'Unknown DJ')+' · '+(msg.nickname||'Anonymous');
   const content=document.createElement('div');content.textContent=msg.text||'';
   item.append(meta,content);
@@ -257,18 +258,19 @@ function renderFeed(id,snapshot,setIndex){
   box.append(item);
  });
 }
-const buckets=Array.from({length:SETS.length},(_,i)=>''+i);
- const stageBucket='0';
- const snapshots=new Map();
- setText('commentsSet','The whole tent · all sets · UK time');
- for(const bucket of buckets){
-  onValue(ref(db,'comments/'+bucket),snap=>{
-   snapshots.set(bucket,snap);
-   const all=[]; for(const [b,ss] of snapshots)ss.forEach(c=>{if(c.val())all.push({key:c.key,...c.val(),bucket:b})});
-   all.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)||a.key.localeCompare(b.key));
-   renderFeed('commentFeed',{forEach:fn=>all.forEach(m=>fn({key:m.key,val:()=>m}))},0);
-  },()=>setText('commentStatus','Some comments could not load. Check Firebase rules.'));
+const buckets=Array.from({length:window.ysFestivalTime().count},(_,i)=>''+i);
+ const snapshots=new Map();let previousSignature=null;
+ const timeFormat=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+ function refreshReplay(){const {elapsed,start,total}=window.ysFestivalTime();const all=[];
+ for(const [b,ss] of snapshots)ss.forEach(c=>{const m=c.val();if(!m||!Number.isFinite(m.createdAt))return;const parts=timeFormat.formatToParts(new Date(m.createdAt));const n=k=>Number(parts.find(p=>p.type===k).value);const offset=(n('hour')*3600+n('minute')*60+n('second')-start+86400)%86400;if(offset<total&&offset<=elapsed)all.push({key:c.key,...m,bucket:b,offset});});
+ all.sort((a,b)=>a.offset-b.offset||a.createdAt-b.createdAt||a.key.localeCompare(b.key));
+ const signature=JSON.stringify(all);if(signature===previousSignature)return;previousSignature=signature;
+ const box=byId('commentFeed'),nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<80,oldTop=box.scrollTop;
+ renderFeed('commentFeed',{forEach:fn=>all.forEach(m=>fn({key:m.key,val:()=>m}))},0);box.scrollTop=nearBottom?box.scrollHeight:oldTop;
  }
+ setText('commentsSet','Live & replay chat · UK festival time');
+ for(const bucket of buckets)onValue(ref(db,'comments/'+bucket),snap=>{snapshots.set(bucket,snap);refreshReplay();},()=>setText('commentStatus','Some comments could not load. Check Firebase rules.'));
+ setInterval(refreshReplay,1000);refreshReplay();
  async function submit(event){event.preventDefault();
  const nickInput=byId('commentNick'),textInput=byId('commentText'),statusId='commentStatus';
  const nickname=cleanNick(nickInput.value),message=textInput.value.trim();

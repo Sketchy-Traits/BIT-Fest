@@ -10,3 +10,13 @@ body.other-tent .shade{background:radial-gradient(ellipse at center,#0001 10%,#2
 .stage-nav .stage-link:not(.active){flex:1;min-height:86px;display:flex;align-items:center;justify-content:center;background:#090b1244!important;border:1px solid currentColor!important;opacity:.76;transition:opacity .3s,background .3s; font-size:clamp(1.1rem,3vw,2rem)}.stage-nav .stage-link:not(.active):hover{opacity:1;background:#171b24bb!important}.stage-nav .main-link:not(.active){color:#86aaff!important;font-family:'Barlow Condensed',Impact,sans-serif}.stage-nav .other-link:not(.active){color:#e9ee82!important;font-family:Bungee,sans-serif}
 .ys-now{margin-top:12px;max-width:300px;font:700 .78rem/1.5 monospace;color:var(--white)}.ys-now span{display:block;color:var(--mint);font-size:.68rem;letter-spacing:.12em}.ys-now strong{display:block;font-size:1rem}.ys-now .ys-next{margin-top:8px}.feed{max-height:480px}.message-meta{line-height:1.5}
 @media(max-width:780px){.hero{min-height:0}.stage-nav .stage-link:not(.active){min-height:64px}.ys-now{max-width:none}}@media(prefers-reduced-motion:reduce){#ys-spectrum{display:none}.backdrop.active{transform:none}}
+/* Equal-width stage tabs, with the current stage visibly dominant. */
+.stage-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px}
+.stage-nav .stage-link,.stage-nav .stage-link:not(.active){width:100%;min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;min-height:76px;padding:12px 8px;box-sizing:border-box}
+.stage-nav .stage-link.active{min-height:112px;opacity:1;border-width:2px;box-shadow:0 0 20px currentColor,inset 0 0 22px #ffffff0c}
+.stage-nav .main-link,.stage-nav .main-link:not(.active){font-size:clamp(1.15rem,3vw,2rem)}
+.stage-nav .other-link,.stage-nav .other-link:not(.active){font-size:clamp(.85rem,2.3vw,1.55rem)}
+@media(max-width:780px){.stage-nav .stage-link,.stage-nav .stage-link:not(.active){min-height:58px}.stage-nav .stage-link.active{min-height:86px}}
+
+.ys-ears{display:block;margin:10px 0;padding:9px 14px;background:#101018bb;color:var(--white);border:1px solid var(--mint);border-radius:4px;font-size:.85rem}.ys-ears[aria-pressed=true]{border-color:var(--yellow)}
+body.other-tent .dot{animation:none!important}

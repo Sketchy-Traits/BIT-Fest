@@ -102,7 +102,7 @@ const $=id=>document.getElementById(id),player=$('player');
 const toSec=t=>{const [h,m]=t.split(':').map(Number);return h*3600+m*60};
 SETS.forEach(s=>s.offset=(toSec(s.time)-START+86400)%86400);
 let joined=false,currentSet=-2,activeBg='bgA',partIndex=-1,loadToken=0,lastSync=0;
-let userPaused=false,internalPause=false,internalPauseUntil=0;
+let userPaused=false,internalPause=false,internalPauseUntil=0, pending=false;
 window.bitfestIsListening=()=>joined&&!userPaused&&!player.paused;
 window.bitfestCurrentSet=()=>currentSet;
 window.bitfestSetName=i=>SETS[i]?.artist||'Unknown';
@@ -110,7 +110,7 @@ player.addEventListener('playing',()=>window.dispatchEvent(new Event('bitfest-li
 player.addEventListener('pause',()=>window.dispatchEvent(new Event('bitfest-listening-change')));
 function pauseInternally(){internalPause=true;internalPauseUntil=Date.now()+1500;player.pause();internalPause=false}
 player.addEventListener('pause',()=>{
-  if(joined&&!internalPause&&Date.now()>internalPauseUntil&&!player.ended){
+  if(joined&&!pending&&!internalPause&&Date.now()>internalPauseUntil&&!player.ended){
     userPaused=true;
     $('joinBtn').textContent='▶ RESUME MAIN STAGE';
     status('Paused from your device. Tap RESUME to continue live.');window.dispatchEvent(new Event('bitfest-listening-change'));
@@ -118,7 +118,7 @@ player.addEventListener('pause',()=>{
 });
 // If playback is resumed from a phone's media controls, jump to the live point.
 player.addEventListener('play',()=>{
-  if(!joined||internalPause)return;
+  if(!joined||internalPause||pending)return;
   if(userPaused){
     const live=locatePart(elapsedNow());
     if(!live){stop();return}
@@ -131,7 +131,7 @@ player.addEventListener('play',()=>{
 // Explicitly handle lock-screen / notification controls where supported.
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('play',()=>resumeLive());
-  navigator.mediaSession.setActionHandler('pause',()=>{userPaused=true;player.pause();$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin live.');window.dispatchEvent(new Event('bitfest-listening-change'))});
+  navigator.mediaSession.setActionHandler('pause',()=>{pending=false;loadToken++;userPaused=true;player.pause();$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin live.');window.dispatchEvent(new Event('bitfest-listening-change'))});
   for(const action of ['seekbackward','seekforward','previoustrack','nexttrack','seekto']){
     try{navigator.mediaSession.setActionHandler(action,null)}catch(e){}
   }
@@ -148,21 +148,25 @@ function renderLineup(index,offAir){$('lineup').replaceChildren(...SETS.map((s,i
 function displaySet(elapsed){const offAir=elapsed>=TOTAL;const index=offAir?-1:getSetIndex(elapsed);if(index===currentSet)return;currentSet=index;renderLineup(index,offAir);if(offAir){$('year').textContent='----';$('artist').textContent='OFF AIR';$('mix').textContent='The music starts again at 09:00 UK time.';$('settime').textContent='TRANSMISSION COMPLETE';$('eyebrow').textContent='◉ MAIN STAGE / OFF AIR';$('broadcastLabel').textContent='MAIN STAGE / OFF AIR';$('liveDot').style.background='#999';$('portrait').src=fallback;$('portraitCaption').textContent='END OF TRANSMISSION';return}const s=SETS[index];$('year').textContent=s.year;$('artist').textContent=s.artist;$('mix').textContent=s.mix;$('settime').textContent=(index===0?'09:00':s.time)+' — '+(index+1<SETS.length?SETS[index+1].time:clockFmt(START+TOTAL))+' UK';$('eyebrow').textContent='◉ NOW TRANSMITTING / MAIN STAGE';$('broadcastLabel').textContent='MAIN STAGE / LIVE FROM '+s.year;$('liveDot').style.background='#ff3d63';$('portrait').src=s.photo;$('portrait').alt='Artwork or photograph for '+s.artist;$('portraitCaption').textContent='ARCHIVE FILE / '+s.year;setBackground(s.bg);window.dispatchEvent(new CustomEvent('bitfest-set-change',{detail:{index}}))}
 function updateNext(elapsed){if(elapsed>=TOTAL){$('nextName').textContent='TOMORROW: SKETCHY TRAITS';$('nextInfo').textContent='09:00 UK TIME';$('countdown').textContent='BACK IN '+clockFmt(86400-elapsed);return}const i=getSetIndex(elapsed);if(i+1<SETS.length){const s=SETS[i+1];$('nextName').textContent=s.artist;$('nextInfo').textContent=s.time+' UK · '+s.year;$('countdown').textContent='IN '+clockFmt(s.offset-elapsed)}else{$('nextName').textContent='END OF BROADCAST';$('nextInfo').textContent='00:56:44 UK';$('countdown').textContent='IN '+clockFmt(TOTAL-elapsed)}}
 function status(msg){$('status').textContent=msg}
-function stop(){joined=false;window.dispatchEvent(new Event('bitfest-listening-change'));loadToken++;pauseInternally();userPaused=false;player.removeAttribute('src');player.load();partIndex=-1;$('joinBtn').textContent='🔊 BACK INTO THE TENT';status('Disconnected. The festival keeps going.')}
-function resumeLive(){
-  const live=locatePart(elapsedNow());
-  if(!live)return;
-  if(!joined){joined=true;window.dispatchEvent(new Event('bitfest-listening-change'))}
-  userPaused=false;window.dispatchEvent(new Event('bitfest-listening-change'));
-  $('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';
-  if(partIndex!==live.index){loadPart(live.index);return}
-  try{player.currentTime=live.offset}catch(e){}
-  player.play().catch(()=>status('Tap RESUME on the website to rejoin live.'));
+function stop(){joined=false;pending=false;loadToken++;userPaused=true;pauseInternally();$('joinBtn').textContent='🔊 BACK INTO THE TENT';status('Muted. The festival keeps going.');window.dispatchEvent(new Event('bitfest-listening-change'));}
+function playbackFailed(token,error){if(token!==loadToken)return;pending=false;userPaused=true;pauseInternally();$('joinBtn').textContent='▶ RESUME LIVE';status(error?.name==='NotAllowedError'?'Browser blocked autoplay. Tap RESUME LIVE to tune in.':'Could not start audio. Tap RESUME LIVE to retry.');window.dispatchEvent(new Event('bitfest-listening-change'));}
+function resumeLive(){const live=locatePart(elapsedNow());if(!live)return;joined=true;userPaused=false;loadPart(live.index);}
+function loadPart(index){
+ const token=++loadToken;pending=true;userPaused=false;joined=true;
+ $('joinBtn').textContent='⏳ CONNECTING · TAP TO CANCEL';status('Connecting to the live archive…');
+ window.yesteryearPrepare?.();window.yesteryearRestoreAudio?.();
+ const url=AUDIO_ROOT+PARTS[index].file;
+ if(partIndex!==index||player.error||!player.getAttribute('src')){partIndex=index;pauseInternally();player.src=url;player.load();}
+ const seekLive=()=>{if(token!==loadToken||!joined)return;const live=locatePart(elapsedNow());if(!live){stop();return;}if(live.index!==index){loadPart(live.index);return;}try{player.currentTime=Math.max(0,Math.min(live.offset,Math.max(0,(Number.isFinite(player.duration)?player.duration:PARTS[index].duration)-.1)));}catch(e){}};
+ if(player.readyState>=1)seekLive();else player.addEventListener('loadedmetadata',seekLive,{once:true});
+ // Call play directly in the click handler, not after metadata/seek events.
+ let attempt;try{attempt=player.play();}catch(e){playbackFailed(token,e);return;}
+ Promise.resolve(attempt).then(()=>{if(token!==loadToken||!joined)return;pending=false;userPaused=false;$('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';status('● CONNECTION ESTABLISHED · YOU ARE LISTENING LIVE');window.dispatchEvent(new Event('bitfest-listening-change'));}).catch(e=>playbackFailed(token,e));
+ setTimeout(()=>{if(token===loadToken&&pending)playbackFailed(token,new Error('Connection timeout'));},20000);
 }
-function loadPart(index){window.yesteryearPrepare?.();const token=++loadToken;partIndex=index;pauseInternally();player.src=AUDIO_ROOT+PARTS[index].file;player.load();status('Connecting to the archive…');const seekAndPlay=()=>{if(token!==loadToken||!joined)return;const part=locatePart(elapsedNow());if(!part||part.index!==index){tick();return}try{player.currentTime=Math.max(0,Math.min(part.offset,Math.max(0,(player.duration||PARTS[index].duration)-.1)))}catch(e){status('Audio is loading…');return}const play=()=>{if(token!==loadToken||!joined||userPaused)return;player.play().then(()=>status('● CONNECTION ESTABLISHED · YOU ARE LISTENING TO '+SETS[getSetIndex(elapsedNow())].year)).catch(()=>status('Tap TUNE IN again if your browser blocked playback.'))};if(player.seeking)player.addEventListener('seeked',play,{once:true});else play()};if(player.readyState>=1)seekAndPlay();else player.addEventListener('loadedmetadata',seekAndPlay,{once:true})}
-function tick(){if(document.body.classList.contains("tent-departing"))return;const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;$('joinNamedBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Music starts tomorrow at 09:00 UK time.');return}if(!joined||userPaused)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused){userPaused=true;$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin the live broadcast.')}}}
-$('joinNamedBtn').addEventListener('click',()=>{const nick=$('joinNick').value.trim().replace(/\s+/g,' ').slice(0,24);if(!nick){$('joinNick').focus();status('Enter a festival name, or use TUNE INTO MAIN STAGE to join anonymously.');return}localStorage.setItem('bitfest-nickname',nick);$('commentNick').value=nick;window.dispatchEvent(new Event('bitfest-listening-change'));if(!joined){$('joinBtn').click()}else if(userPaused){resumeLive()}else{status('● YOU ARE TUNED IN AS '+nick)}window.dispatchEvent(new Event('bitfest-listening-change'))});$('joinBtn').addEventListener('click',()=>{if(joined){if(player.paused){resumeLive()}else stop();return}const part=locatePart(elapsedNow());if(!part)return;joined=true;window.dispatchEvent(new Event('bitfest-listening-change'));$('joinBtn').textContent='🔇 DIP OUT OF THE TENT FOR A MOMENT';loadPart(part.index)});
-player.addEventListener('ended',()=>{if(joined)tick()});player.addEventListener('error',()=>{if(joined)status('Audio could not load. Check your connection and try tuning in again.')});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);window.addEventListener('pageshow',tick);tick();setInterval(tick,1000);
+function tick(){if(document.body.classList.contains("tent-departing"))return;const now=ukSeconds();$('clock').textContent=clockFmt(now);const elapsed=(now-START+86400)%86400;displaySet(elapsed);updateNext(elapsed);const part=locatePart(elapsed);$('joinBtn').disabled=!part;$('joinNamedBtn').disabled=!part;if(!part){if(joined)stop();$('joinBtn').textContent='◼ MAIN STAGE OFF AIR';status('Music starts tomorrow at 09:00 UK time.');return}if(!joined||userPaused||pending)return;if(partIndex!==part.index){loadPart(part.index);return}if(player.readyState>=1&&Date.now()-lastSync>5000){lastSync=Date.now();if(Math.abs(player.currentTime-part.offset)>3){try{player.currentTime=part.offset}catch(e){}}if(player.paused){userPaused=true;$('joinBtn').textContent='▶ RESUME MAIN STAGE';status('Paused. Press play to rejoin the live broadcast.')}}}
+$('joinNamedBtn').addEventListener('click',()=>{const nick=$('joinNick').value.trim().replace(/\s+/g,' ').slice(0,24);if(!nick){$('joinNick').focus();status('Enter a festival name, or use TUNE INTO MAIN STAGE to join anonymously.');return}localStorage.setItem('bitfest-nickname',nick);$('commentNick').value=nick;window.dispatchEvent(new Event('bitfest-listening-change'));if(!joined||userPaused||player.paused){resumeLive()}else{status('● YOU ARE TUNED IN AS '+nick)}window.dispatchEvent(new Event('bitfest-listening-change'))});$('joinBtn').addEventListener('click',()=>{if(pending||(joined&&!userPaused&&!player.paused)){stop();return;}resumeLive();});
+player.addEventListener('ended',()=>{if(joined)tick()});player.addEventListener('error',()=>{if(joined)playbackFailed(loadToken,player.error)});document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);window.addEventListener('pageshow',event=>{if(event.persisted){document.body.classList.remove('tent-departing');window.yesteryearRestoreAudio?.();}tick()});tick();setInterval(tick,1000);
 // Preserve a user's initial audio opt-in when walking between tents.
 // Browser autoplay policies can still require a tap after a full-page navigation.
 window.yesteryearAudio = {player, urls:PARTS.map(p=>AUDIO_ROOT+p.file)};
@@ -172,11 +176,12 @@ for(const link of tentLinks){
   link.addEventListener('click',event=>{
     if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
     event.preventDefault();
-    const wasListening=joined&&!userPaused&&!player.paused;
+    if(document.body.classList.contains('tent-departing'))return;
+    const wasListening=joined&&!userPaused&&(pending||!player.paused);
     sessionStorage.setItem('bitfest-tent-switch',JSON.stringify({autojoin:wasListening,at:Date.now()}));
     document.body.classList.add('tent-departing');
     // Stop this tent immediately: never allow two audio streams.
-    window.yesteryearFadeOut().finally(()=>{pauseInternally();window.location.href=link.href});
+    Promise.resolve(window.yesteryearFadeOut?.()).finally(()=>{stop();window.location.href=link.href});
   });
 }
 let tentArrival=null;
@@ -189,7 +194,7 @@ if(tentArrival&&Date.now()-tentArrival.at<15000){
     window.yesteryearArrival = true;
     // This uses the existing live-position seek logic, rather than starting at 0.
     setTimeout(()=>{
-      if(!joined&&!$('joinBtn').disabled)$('joinBtn').click();
+      if(!joined&&!$('joinBtn').disabled)resumeLive();
     },120);
   }
 }

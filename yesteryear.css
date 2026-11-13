@@ -1,0 +1,12 @@
+body{isolation:isolate;--pink:#ff344d;--mint:#7eaaff;--yellow:#f4f0ff;--ink:#070910;--white:#f5f4ff}
+body.other-tent{--pink:#a6d85a;--mint:#c5e99a;--yellow:#ffe879;--ink:#10150a;--white:#fffbe8}
+body:not(.other-tent) .shade{background:radial-gradient(ellipse at center,#0001 10%,#0009 65%,#000 100%),linear-gradient(110deg,#080d22aa,#0002,#29040e88)!important}
+body:not(.other-tent) .hero,body:not(.other-tent) .panel{background:#080d19a8;border-color:#5579bd66;box-shadow:none}
+body:not(.other-tent) .brand.stage-title,body:not(.other-tent) .year{text-shadow:3px 3px #a31c38,6px 6px #183e8b}
+body.other-tent .hero,body.other-tent .panel{background:#121b0caa;border-color:#c7da6866;box-shadow:none}
+body.other-tent .shade{background:radial-gradient(ellipse at center,#0001 10%,#252a0a66 65%,#000 100%),linear-gradient(110deg,#111a0baa,#0002,#3a330b66)!important}
+.shell{position:relative;z-index:2}.hero{min-height:min(65vh,650px)}.hero:before{opacity:.3}.scanlines{opacity:.045}.backdrop{transition:opacity 1.8s ease,transform 24s linear}.backdrop.active{transform:scale(1.035)}
+#ys-spectrum{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none} .festival-byline{letter-spacing:.18em}.ys-tag{display:block;margin-top:5px;font-size:.8em;opacity:.8}
+.stage-nav .stage-link:not(.active){flex:1;min-height:86px;display:flex;align-items:center;justify-content:center;background:#090b1244!important;border:1px solid currentColor!important;opacity:.76;transition:opacity .3s,background .3s; font-size:clamp(1.1rem,3vw,2rem)}.stage-nav .stage-link:not(.active):hover{opacity:1;background:#171b24bb!important}.stage-nav .main-link:not(.active){color:#86aaff!important;font-family:'Barlow Condensed',Impact,sans-serif}.stage-nav .other-link:not(.active){color:#e9ee82!important;font-family:Bungee,sans-serif}
+.ys-now{margin-top:12px;max-width:300px;font:700 .78rem/1.5 monospace;color:var(--white)}.ys-now span{display:block;color:var(--mint);font-size:.68rem;letter-spacing:.12em}.ys-now strong{display:block;font-size:1rem}.ys-now .ys-next{margin-top:8px}.feed{max-height:480px}.message-meta{line-height:1.5}
+@media(max-width:780px){.hero{min-height:0}.stage-nav .stage-link:not(.active){min-height:64px}.ys-now{max-width:none}}@media(prefers-reduced-motion:reduce){#ys-spectrum{display:none}.backdrop.active{transform:none}}
